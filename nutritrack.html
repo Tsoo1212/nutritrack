@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>NutriTrack</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #FFF8F4 !important; }
+:root { color-scheme: light only; }
+
+:root {
+  --peach: #E8956D;
+  --peach-light: #FDEEE6;
+  --peach-dark: #C4683A;
+  --cream: #FFF8F4;
+  --cream2: #FDEEE6;
+  --text: #3A2A1E;
+  --text-soft: #9A7B6A;
+  --border: #EDD9C8;
+  --white: #FFFFFF;
+  --rose: #E8A0A0;
+  --rose-light: #FDEAEA;
+}
+
+body {
+  font-family: 'Heebo', sans-serif;
+  background: #FFF8F4 !important;
+  color: var(--text);
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+}
+
+/* TOP BAR */
+.topbar {
+  background: var(--white);
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-logo { font-size: 20px; font-weight: 700; color: var(--peach-dark); }
+.topbar-logo span { color: var(--peach); font-weight: 300; }
+.topbar-date { font-size: 13px; color: var(--text-soft); }
+
+/* GREETING */
+.greeting { padding: 22px 20px 10px; }
+.greeting h2 { font-size: 22px; font-weight: 600; color: var(--text); }
+.greeting p { font-size: 14px; color: var(--text-soft); margin-top: 4px; }
+
+/* DAY STRIP */
+.day-strip { display: flex; gap: 8px; padding: 10px 20px 16px; }
+.strip-card {
+  flex: 1;
+  background: var(--peach);
+  border-radius: 14px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.strip-card.empty { background: #FFE8D6; border: 1.5px solid #F5C4A1; }
+.strip-card .num { font-size: 18px; font-weight: 700; color: var(--white); }
+.strip-card.empty .num { color: var(--peach-dark); }
+.strip-card .lbl { font-size: 10px; color: rgba(255,255,255,0.85); margin-top: 3px; }
+.strip-card.empty .lbl { color: var(--peach-dark); }
+
+/* SECTION HEADER */
+.sec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px 10px;
+}
+.sec-header h3 { font-size: 15px; font-weight: 700; color: var(--peach-dark); }
+
+/* MEAL / ACTIVITY CARDS */
+.cards-list { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+.item-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.item-time {
+  font-size: 13px; font-weight: 600;
+  color: var(--white);
+  background: var(--peach);
+  border-radius: 8px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.item-info { flex: 1; }
+.item-name { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4; }
+.item-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.tag {
+  font-size: 11px; color: var(--peach-dark);
+  background: var(--peach-light);
+  border-radius: 6px; padding: 2px 8px;
+}
+
+/* ADD BUTTON */
+.add-btn {
+  margin: 10px 20px 0;
+  width: calc(100% - 40px);
+  display: flex; align-items: center; gap: 10px;
+  background: var(--white);
+  border: 1.5px dashed var(--border);
+  border-radius: 16px;
+  padding: 13px 16px;
+  cursor: pointer;
+  color: var(--text-soft);
+  font-size: 14px;
+  font-family: 'Heebo', sans-serif;
+  transition: border-color 0.15s;
+}
+.add-btn:hover { border-color: var(--peach); color: var(--peach-dark); }
+.add-icon {
+  width: 28px; height: 28px;
+  background: var(--peach-light);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--peach-dark);
+  flex-shrink: 0;
+}
+
+/* SUMMARY BUTTONS */
+.summary-btns { padding: 20px 20px 0; display: flex; flex-direction: column; gap: 10px; }
+.btn-interim {
+  width: 100%;
+  background: var(--white);
+  border: 1.5px solid var(--peach);
+  color: var(--peach-dark);
+  border-radius: 16px;
+  padding: 15px 20px;
+  font-size: 15px; font-weight: 600;
+  font-family: 'Heebo', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-interim:hover { background: var(--peach-light); }
+.btn-final {
+  width: 100%;
+  background: var(--peach-dark);
+  border: none;
+  color: var(--white);
+  border-radius: 16px;
+  padding: 15px 20px;
+  font-size: 15px; font-weight: 600;
+  font-family: 'Heebo', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-final:hover { background: var(--peach); }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed; bottom: 0; right: 0; left: 0;
+  max-width: 430px; margin: 0 auto;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 10px 0 18px;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; cursor: pointer; padding: 4px 0;
+}
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 500; color: var(--text-soft); }
+.nav-item.active .nav-label { color: var(--peach-dark); font-weight: 700; }
+.bottom-spacer { height: 90px; }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(58,42,30,0.35);
+  z-index: 200; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--white);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 20px 36px;
+  width: 100%; max-width: 430px;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-handle {
+  width: 40px; height: 4px;
+  background: var(--border);
+  border-radius: 2px; margin: 0 auto 20px;
+}
+.modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 18px; color: var(--text); }
+
+/* FORM */
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text-soft); display: block; margin-bottom: 6px; }
+.form-input {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: 'Heebo', sans-serif;
+  color: var(--text);
+  background: var(--cream);
+  outline: none;
+  transition: border-color 0.15s;
+  direction: rtl;
+}
+.form-input.full { width: 100%; }
+.form-input:focus { border-color: var(--peach); background: var(--white); }
+.form-textarea {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: 'Heebo', sans-serif;
+  color: var(--text);
+  background: var(--cream);
+  outline: none; resize: none; min-height: 100px;
+  transition: border-color 0.15s; direction: rtl;
+}
+.form-textarea:focus { border-color: var(--peach); background: var(--white); }
+
+/* OPTION BUTTONS */
+.opts { display: flex; gap: 8px; flex-wrap: wrap; }
+.opt-btn {
+  padding: 9px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--cream);
+  font-size: 14px; font-weight: 500;
+  font-family: 'Heebo', sans-serif;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.opt-btn.selected {
+  border-color: var(--peach-dark);
+  background: var(--peach-dark);
+  color: var(--white);
+  font-weight: 600;
+}
+
+/* UPLOAD */
+.upload-area {
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-soft);
+  font-size: 14px;
+  background: var(--cream);
+  transition: border-color 0.15s;
+}
+.upload-area:hover { border-color: var(--peach); }
+.upload-icon { font-size: 28px; margin-bottom: 6px; }
+.upload-confirm { font-size: 13px; color: var(--peach-dark); margin-top: 6px; }
+
+.or-div {
+  display: flex; align-items: center; gap: 10px;
+  margin: 14px 0; color: var(--text-soft); font-size: 13px;
+}
+.or-div::before, .or-div::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* MODAL BUTTONS */
+.modal-save {
+  width: 100%;
+  background: var(--peach-dark); color: var(--white);
+  border: none; border-radius: 14px;
+  padding: 15px; font-size: 16px; font-weight: 600;
+  font-family: 'Heebo', sans-serif;
+  cursor: pointer; margin-top: 8px;
+  transition: background 0.15s;
+}
+.modal-save:hover { background: var(--peach); }
+.modal-cancel {
+  width: 100%;
+  background: transparent; color: var(--text-soft);
+  border: none; border-radius: 14px;
+  padding: 12px; font-size: 15px;
+  font-family: 'Heebo', sans-serif;
+  cursor: pointer; margin-top: 4px;
+}
+
+/* SUMMARY CONTENT */
+.summary-content { font-size: 15px; line-height: 1.8; color: var(--text); }
+.summary-content .placeholder { color: var(--text-soft); font-size: 14px; }
+
+/* WAVE ANIMATION */
+@keyframes wave {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(18deg); }
+  30%  { transform: rotate(-10deg); }
+  45%  { transform: rotate(14deg); }
+  60%  { transform: rotate(-6deg); }
+  75%  { transform: rotate(8deg); }
+  100% { transform: rotate(0deg); }
+}
+.wave-emoji {
+  display: inline-block;
+  animation: wave 2.6s ease-in-out 0.4s 1;
+  transform-origin: 70% 80%;
+}
+.wave-emoji.waving {
+  animation: wave 2.6s ease-in-out;
+}
+
+/* NAV TAP ANIMATION */
+@keyframes navPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.82); }
+  70%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.nav-item.tapped .nav-icon {
+  animation: navPop 0.3s ease;
+}
+
+/* ADD BUTTON BOUNCE */
+@keyframes btnBounce {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(0.94); }
+  60%  { transform: scale(1.04); }
+  80%  { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+.add-btn.popped { animation: btnBounce 0.4s ease; }
+
+/* SAVE BUTTON SUCCESS PULSE */
+@keyframes savePulse {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(196,104,58,0.4); }
+  50%  { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(196,104,58,0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(196,104,58,0); }
+}
+.modal-save.pulsed { animation: savePulse 0.45s ease; }
+
+/* SUMMARY BUTTONS SHIMMER */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.btn-interim.shimmer {
+  background: linear-gradient(90deg, #fff 25%, #FDEEE6 50%, #fff 75%);
+  background-size: 200% auto;
+  animation: shimmer 0.6s ease;
+}
+.btn-final.shimmer {
+  background: linear-gradient(90deg, var(--peach-dark) 25%, var(--peach) 50%, var(--peach-dark) 75%);
+  background-size: 200% auto;
+  animation: shimmer 0.6s ease;
+}
+
+/* STRIP CARD POP on update */
+@keyframes cardPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.strip-card.popped { animation: cardPop 0.35s ease; }
+
+/* MEAL/ACTIVITY CARD SLIDE IN */
+@keyframes slideIn {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.item-card.new { animation: slideIn 0.35s ease; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">Nutri<span>Track</span></div>
+  <div class="topbar-date" id="todayDate"></div>
+</div>
+
+<div class="greeting">
+  <h2>שלום צוף <span class="wave-emoji" onclick="rewave(this)" style="cursor:pointer;">👋</span></h2>
+  <p>בואי נעקוב יחד אחרי היום שלך</p>
+</div>
+
+<div class="day-strip">
+  <div class="strip-card">
+    <div class="num" id="mealCount">0</div>
+    <div class="lbl">ארוחות</div>
+  </div>
+  <div class="strip-card">
+    <div class="num" id="actCount">0</div>
+    <div class="lbl">פעילות</div>
+  </div>
+  <div class="strip-card empty">
+    <div class="num">–</div>
+    <div class="lbl">סוכר</div>
+  </div>
+  <div class="strip-card empty">
+    <div class="num">–</div>
+    <div class="lbl">כולסטרול</div>
+  </div>
+</div>
+
+<div class="sec-header">
+  <h3>🍽️ ארוחות היום</h3>
+</div>
+<div class="cards-list" id="mealsList"></div>
+<button class="add-btn" id="addMealBtn" onclick="popBtn(this); openMealModal()">
+  <div class="add-icon">+</div>
+  הוסיפי ארוחה
+</button>
+
+<div class="sec-header" style="margin-top:20px;">
+  <h3>🏃 פעילות גופנית</h3>
+</div>
+<div class="cards-list" id="actList"></div>
+<button class="add-btn" id="addActBtn" onclick="popBtn(this); openActivityModal()">
+  <div class="add-icon">+</div>
+  הוסיפי פעילות
+</button>
+
+<div class="summary-btns">
+  <button class="btn-interim" onclick="shimmerBtn(this); openInterim()">☀️ סיכום ביניים – המלצות להמשך היום</button>
+  <button class="btn-final" onclick="shimmerBtn(this); openFinal()">🌙 סיכום יומי סופי</button>
+</div>
+
+<div class="bottom-spacer"></div>
+
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="tapNav(this)">
+    <div class="nav-icon">🏠</div>
+    <div class="nav-label">היום</div>
+  </div>
+  <div class="nav-item" onclick="tapNav(this); openWeekly()">
+    <div class="nav-icon">📅</div>
+    <div class="nav-label">שבועי</div>
+  </div>
+  <div class="nav-item" onclick="tapNav(this); openMonthly()">
+    <div class="nav-icon">📊</div>
+    <div class="nav-label">חודשי</div>
+  </div>
+  <div class="nav-item" onclick="tapNav(this); openBloodTests()">
+    <div class="nav-icon">🩸</div>
+    <div class="nav-label">בדיקות דם</div>
+  </div>
+  <div class="nav-item" onclick="tapNav(this); openHistory()">
+    <div class="nav-icon">📖</div>
+    <div class="nav-label">היסטוריה</div>
+  </div>
+</div>
+
+<!-- MODAL: MEAL -->
+<div class="modal-overlay" id="mealModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>הוספת ארוחה</h3>
+    <div class="form-group">
+      <label class="form-label">שעת הארוחה</label>
+      <input type="time" class="form-input" id="mealTime" style="max-width:140px;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">מה אכלת? (מצרכים וכמויות)</label>
+      <textarea class="form-textarea" id="mealText" placeholder="למשל: 2 ביצים, 2 כפות שמן זית, פרוסת לחם מלא, עגבנייה"></textarea>
+    </div>
+    <div class="or-div">או</div>
+    <div class="form-group">
+      <label class="form-label">📸 צילום ערכים תזונתיים (לחטיף / מוצר ארוז)</label>
+      <div class="upload-area" onclick="document.getElementById('nutritionFile').click()">
+        <div class="upload-icon">📷</div>
+        לחצי להעלאת צילום מסך או תמונה
+        <input type="file" id="nutritionFile" accept="image/*" style="display:none" onchange="handleUpload(this)">
+      </div>
+      <div class="upload-confirm" id="uploadName"></div>
+    </div>
+    <div id="qtySection" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">כמה אכלת מהמוצר?</label>
+        <div class="opts">
+          <button class="opt-btn" onclick="selectOpt(this,'qty','¼')">¼</button>
+          <button class="opt-btn" onclick="selectOpt(this,'qty','½')">½</button>
+          <button class="opt-btn" onclick="selectOpt(this,'qty','¾')">¾</button>
+          <button class="opt-btn" onclick="selectOpt(this,'qty','הכל')">הכל</button>
+        </div>
+      </div>
+    </div>
+    <button class="modal-save" onclick="pulseBtn(this); saveMeal()">שמירה</button>
+    <button class="modal-cancel" onclick="closeModal('mealModal')">ביטול</button>
+  </div>
+</div>
+
+<!-- MODAL: ACTIVITY -->
+<div class="modal-overlay" id="activityModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>הוספת פעילות גופנית</h3>
+    <div class="form-group">
+      <label class="form-label">סוג הפעילות</label>
+      <input type="text" class="form-input full" id="actType" placeholder="הליכה, שחייה, יוגה, אופניים...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">משך (דקות)</label>
+      <input type="number" class="form-input" id="actDuration" placeholder="30" style="max-width:140px;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">עצימות</label>
+      <div class="opts">
+        <button class="opt-btn" onclick="selectOpt(this,'intensity','קלה')">קלה</button>
+        <button class="opt-btn" onclick="selectOpt(this,'intensity','בינונית')">בינונית</button>
+        <button class="opt-btn" onclick="selectOpt(this,'intensity','מאומצת')">מאומצת</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">שעה (אופציונלי)</label>
+      <input type="time" class="form-input" id="actTime" style="max-width:140px;">
+    </div>
+    <button class="modal-save" onclick="pulseBtn(this); saveActivity()">שמירה</button>
+    <button class="modal-cancel" onclick="closeModal('activityModal')">ביטול</button>
+  </div>
+</div>
+
+<!-- MODAL: INTERIM -->
+<div class="modal-overlay" id="interimModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>☀️ סיכום ביניים</h3>
+    <div class="summary-content" id="interimContent"></div>
+    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('interimModal')">סגירה</button>
+  </div>
+</div>
+
+<!-- MODAL: FINAL -->
+<div class="modal-overlay" id="finalModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>🌙 סיכום יומי סופי</h3>
+    <div class="summary-content" id="finalContent"></div>
+    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('finalModal')">סגירה</button>
+  </div>
+</div>
+
+<script>
+  const NUTRI_SYSTEM = `את Nutri, עוזרת תזונה אישית ואכפתית של צוף.
+
+פרופיל צוף:
+- אישה, גיל 44
+- טרום סוכרת
+- כבד שומני
+- נטייה לדלקתיות
+- גירוי בקיבה ממזונות מסוימים
+- מנסה לצמצם שימוש בנקסיום (תרופה לקיבה)
+
+בדיקות דם עדכניות (האחרונות):
+- Glucose: 108 mg/dl (גבוה מנורמה, נורמה עד 100) ⚠️
+- HbA1C: 5.7% (גבול עליון טרום סוכרת) ⚠️
+- אינסולין: 14 mIU/L (תקין)
+- ALT: 21 U/l (תקין)
+- AST: 19 U/l (תקין)
+- TSH: 2.12 (תקין)
+- ויטמין B12: 348 pg/ml (תקין, בצד הנמוך)
+- פריטין: 46.6 ng/ml (תקין)
+- CRP: קטן מ-0.5 (תקין)
+
+בדיקות לפני 4 חודשים:
+- Glucose: 116 mg/dl (ירד ל-108 – שיפור!)
+- ALT/AST: תקינים
+
+כולסטרול: אין נתונים עדיין.
+
+האופי שלך:
+- נעימה, אמפתית, לא שיפוטית
+- מסבירה למה דברים טובים או פחות טובים לגוף של צוף ספציפית
+- מתחשבת בקיבה הרגישה ובנקסיום – מזהירה ממזונות שמגרים קיבה (קפה, שוקולד, מזון שומני, חריף, פירות הדר, עגבניות, אלכוהול)
+- מתחשבת בדלקתיות – מעדיפה מזונות אנטי דלקתיים (אומגה 3, כורכום, ירקות ירוקים, אגוזי מלך)
+- מתחשבת בכבד השומני – נזהרת מסוכר מוסף, שומן רווי, מזון מעובד
+- מתחשבת בטרום סוכרת – מדגישה אינדקס גליקמי נמוך, פחמימות מורכבות, לא פחמימות פשוטות
+- כשיש שיפור מציינת אותו בחום ומעודדת
+- כשיש החמרה מבקשת לשים לב בעדינות ומסבירה מדוע
+- מסיימת תמיד עם המלצה ספציפית אחת ועידוד
+
+כללי תגובה:
+- כותבת בעברית
+- תגובה קצרה וקריאה, לא ארוכה מדי
+- משתמשת בכותרות קצרות כדי לארגן את הפידבק
+- לא מחליפה רופא או דיאטנית`;
+
+  // Load from localStorage
+  let meals = JSON.parse(localStorage.getItem('nutri_meals') || '[]');
+  let activities = JSON.parse(localStorage.getItem('nutri_activities') || '[]');
+  let selQty = '', selIntensity = '';
+
+  // Save helpers
+  function saveMealsToStorage() {
+    localStorage.setItem('nutri_meals', JSON.stringify(meals));
+    // Save to all-time meals by day
+    const allMeals = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
+    allMeals[new Date().toDateString()] = meals;
+    localStorage.setItem('nutri_all_meals', JSON.stringify(allMeals));
+  }
+  function saveActivitiesToStorage() {
+    localStorage.setItem('nutri_activities', JSON.stringify(activities));
+    // Save to all-time activities by day
+    const allActs = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
+    allActs[new Date().toDateString()] = activities;
+    localStorage.setItem('nutri_all_activities', JSON.stringify(allActs));
+  }
+
+  // Check if stored data is from today, clear if not
+  const todayKey = new Date().toDateString();
+  const storedDay = localStorage.getItem('nutri_day');
+  if (storedDay !== todayKey) {
+    meals = [];
+    activities = [];
+    localStorage.setItem('nutri_day', todayKey);
+    saveMealsToStorage();
+    saveActivitiesToStorage();
+  }
+
+  const days = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  const months = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  const now = new Date();
+  document.getElementById('todayDate').textContent = `יום ${days[now.getDay()]}, ${now.getDate()} ב${months[now.getMonth()]}`;
+
+  function nowTime() {
+    return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  function selectOpt(btn, group, val) {
+    if (group === 'qty') selQty = val;
+    if (group === 'intensity') selIntensity = val;
+    const parent = btn.closest('.opts');
+    parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  // MEAL
+  function openMealModal() {
+    document.getElementById('mealTime').value = nowTime();
+    document.getElementById('mealText').value = '';
+    document.getElementById('uploadName').textContent = '';
+    document.getElementById('qtySection').style.display = 'none';
+    selQty = '';
+    document.querySelectorAll('#mealModal .opt-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('mealModal').classList.add('open');
+  }
+
+  function handleUpload(input) {
+    if (input.files && input.files[0]) {
+      document.getElementById('uploadName').textContent = '✅ ' + input.files[0].name;
+      document.getElementById('qtySection').style.display = 'block';
+    }
+  }
+
+  function saveMeal() {
+    const time = document.getElementById('mealTime').value;
+    const text = document.getElementById('mealText').value.trim();
+    const uploaded = document.getElementById('uploadName').textContent;
+    if (!time) { alert('נא לבחור שעה'); return; }
+    if (!text && !uploaded) { alert('נא להזין מצרכים או להעלות צילום'); return; }
+    let desc = text;
+    if (uploaded) desc += (desc ? ' + ' : '') + `מוצר סרוק${selQty ? ' (' + selQty + ')' : ''}`;
+    meals.push({ time, desc });
+    meals.sort((a,b) => a.time.localeCompare(b.time));
+    saveMealsToStorage();
+    renderMeals(true);
+    closeModal('mealModal');
+  }
+
+  function renderMeals(animate) {
+    const countEl = document.getElementById('mealCount');
+    countEl.textContent = meals.length;
+    if (animate) { countEl.closest('.strip-card').classList.remove('popped'); void countEl.closest('.strip-card').offsetWidth; countEl.closest('.strip-card').classList.add('popped'); setTimeout(() => countEl.closest('.strip-card').classList.remove('popped'), 400); }
+    document.getElementById('mealsList').innerHTML = meals.map((m, i) => `
+      <div class="item-card${animate && i === meals.length-1 ? ' new' : ''}">
+        <div class="item-time">${m.time}</div>
+        <div class="item-info"><div class="item-name">${m.desc}</div></div>
+      </div>`).join('');
+  }
+
+  // ACTIVITY
+  function openActivityModal() {
+    document.getElementById('actType').value = '';
+    document.getElementById('actDuration').value = '';
+    document.getElementById('actTime').value = '';
+    selIntensity = '';
+    document.querySelectorAll('#activityModal .opt-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('activityModal').classList.add('open');
+  }
+
+  function saveActivity() {
+    const type = document.getElementById('actType').value.trim();
+    const duration = document.getElementById('actDuration').value;
+    const time = document.getElementById('actTime').value;
+    if (!type) { alert('נא להזין סוג פעילות'); return; }
+    if (!duration) { alert('נא להזין משך בדקות'); return; }
+    if (!selIntensity) { alert('נא לבחור עצימות'); return; }
+    activities.push({ type, duration, intensity: selIntensity, time });
+    saveActivitiesToStorage();
+    renderActivities(true);
+    closeModal('activityModal');
+  }
+
+  function renderActivities(animate) {
+    const countEl = document.getElementById('actCount');
+    countEl.textContent = activities.length;
+    if (animate) { countEl.closest('.strip-card').classList.remove('popped'); void countEl.closest('.strip-card').offsetWidth; countEl.closest('.strip-card').classList.add('popped'); setTimeout(() => countEl.closest('.strip-card').classList.remove('popped'), 400); }
+    document.getElementById('actList').innerHTML = activities.map((a, i) => `
+      <div class="item-card${animate && i === activities.length-1 ? ' new' : ''}">
+        <div class="item-time">${a.time || '–'}</div>
+        <div class="item-info">
+          <div class="item-name">${a.type} · ${a.duration} דקות</div>
+          <div class="item-tags"><span class="tag">${a.intensity}</span></div>
+        </div>
+      </div>`).join('');
+  }
+
+  // SUMMARIES
+  // Save feedback to history
+  function saveFeedbackToHistory(type, content) {
+    const history = JSON.parse(localStorage.getItem('nutri_history') || '[]');
+    const today = new Date();
+    history.unshift({
+      date: today.toLocaleDateString('he-IL'),
+      dateKey: today.toDateString(),
+      type, // 'interim' or 'final'
+      meals: [...meals],
+      activities: [...activities],
+      feedback: content
+    });
+    // Keep last 60 days
+    const trimmed = history.slice(0, 60);
+    localStorage.setItem('nutri_history', JSON.stringify(trimmed));
+  }
+
+  function openBloodTests() {
+    const tests = JSON.parse(localStorage.getItem('nutri_blood_tests') || '[]');
+    const el = document.getElementById('bloodContent');
+
+    const fields = [
+      { key: 'glucose', label: 'גלוקוז', unit: 'mg/dl', min: 70, max: 100 },
+      { key: 'hba1c', label: 'HbA1C', unit: '%', min: 4, max: 5.6 },
+      { key: 'cholesterol', label: 'כולסטרול כללי', unit: 'mg/dl', min: 0, max: 200 },
+      { key: 'ldl', label: 'LDL', unit: 'mg/dl', min: 0, max: 130 },
+      { key: 'hdl', label: 'HDL', unit: 'mg/dl', min: 50, max: 999 },
+      { key: 'trig', label: 'טריגליצרידים', unit: 'mg/dl', min: 0, max: 150 },
+      { key: 'alt', label: 'ALT', unit: 'U/l', min: 0, max: 31 },
+      { key: 'ast', label: 'AST', unit: 'U/l', min: 0, max: 31 },
+      { key: 'crp', label: 'CRP', unit: 'mg/dl', min: 0, max: 0.5 },
+      { key: 'b12', label: 'ויטמין B12', unit: 'pg/ml', min: 211, max: 911 },
+      { key: 'ferritin', label: 'פריטין', unit: 'ng/ml', min: 7, max: 270 },
+    ];
+
+    function statusIcon(val, field) {
+      if (val === '' || val === null || val === undefined) return '';
+      const v = parseFloat(val);
+      if (field.key === 'hdl') return v >= field.min ? '✅' : '⚠️';
+      return v <= field.max && v >= field.min ? '✅' : '⚠️';
+    }
+
+    if (tests.length === 0) {
+      el.innerHTML = `
+        <p style="color:var(--text-soft);text-align:center;padding:16px 0;">עדיין לא הוזנו בדיקות דם.</p>
+        <div style="background:var(--peach-light);border-radius:12px;padding:14px;font-size:13px;color:var(--peach-dark);margin-bottom:16px;">
+          <strong>הבדיקות הנוכחיות של צוף (מהבדיקה האחרונה):</strong><br><br>
+          ✅ גלוקוז: 108 mg/dl<br>
+          ✅ HbA1C: 5.7%<br>
+          ✅ ALT: 21 U/l<br>
+          ✅ AST: 19 U/l<br>
+          ✅ CRP: &lt;0.5 mg/dl<br>
+          ✅ B12: 348 pg/ml<br>
+          ✅ פריטין: 46.6 ng/ml
+        </div>
+        <button class="modal-save" onclick="openAddBloodTest()">+ הוספת בדיקה חדשה</button>`;
+    } else {
+      // Show latest + comparison
+      const latest = tests[0];
+      const prev = tests[1];
+
+      const rows = fields.map(f => {
+        const val = latest[f.key];
+        if (val === '' || val === undefined) return '';
+        const icon = statusIcon(val, f);
+        let trend = '';
+        if (prev && prev[f.key] !== '' && prev[f.key] !== undefined) {
+          const diff = parseFloat(val) - parseFloat(prev[f.key]);
+          if (diff < 0) trend = '<span style="color:#4CAF50;font-size:11px;"> ↓' + Math.abs(diff).toFixed(1) + '</span>';
+          else if (diff > 0) trend = '<span style="color:#E57373;font-size:11px;"> ↑' + diff.toFixed(1) + '</span>';
+          else trend = '<span style="color:var(--text-soft);font-size:11px;"> ─</span>';
+        }
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div style="font-size:13px;color:var(--text);">${f.label}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${icon} ${val} ${f.unit}${trend}</div>
+          </div>`;
+      }).filter(Boolean).join('');
+
+      el.innerHTML = `
+        <div style="font-size:12px;color:var(--text-soft);margin-bottom:12px;">בדיקה אחרונה: ${latest.date}</div>
+        ${rows}
+        <div style="margin-top:16px;display:flex;gap:10px;">
+          <button class="modal-save" style="flex:1;" onclick="openAddBloodTest()">+ בדיקה חדשה</button>
+        </div>
+        ${tests.length > 1 ? '<div style="font-size:11px;color:var(--text-soft);text-align:center;margin-top:8px;">חצים מראים שינוי מהבדיקה הקודמת</div>' : ''}`;
+    }
+
+    document.getElementById('bloodModal').classList.add('open');
+  }
+
+  function openAddBloodTest() {
+    closeModal('bloodModal');
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('bloodDate').value = today;
+    ['Glucose','Hba1c','Cholesterol','Ldl','Hdl','Trig','Alt','Ast','Crp','B12','Ferritin'].forEach(f => {
+      document.getElementById('b' + f).value = '';
+    });
+    bloodImageData = null;
+    document.getElementById('bloodImageName').textContent = '';
+    document.getElementById('bloodImagePreview').style.display = 'none';
+    switchBloodInput('manual');
+    document.getElementById('addBloodModal').classList.add('open');
+  }
+
+  function switchBloodInput(mode) {
+    if (mode === 'manual') {
+      document.getElementById('bloodManualSection').style.display = 'block';
+      document.getElementById('bloodImageSection').style.display = 'none';
+      document.getElementById('toggleManual').classList.add('selected');
+      document.getElementById('toggleImage').classList.remove('selected');
+    } else {
+      document.getElementById('bloodManualSection').style.display = 'none';
+      document.getElementById('bloodImageSection').style.display = 'block';
+      document.getElementById('toggleManual').classList.remove('selected');
+      document.getElementById('toggleImage').classList.add('selected');
+    }
+  }
+
+  let bloodImageData = null;
+
+  function handleBloodImageUpload(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      document.getElementById('bloodImageName').textContent = '✅ ' + file.name;
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          bloodImageData = e.target.result;
+          document.getElementById('bloodImageEl').src = e.target.result;
+          document.getElementById('bloodImagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        bloodImageData = 'pdf:' + file.name;
+        document.getElementById('bloodImagePreview').style.display = 'none';
+      }
+    }
+  }
+
+  function saveBloodTest() {
+    const date = document.getElementById('bloodDate').value;
+    if (!date) { alert('נא לבחור תאריך'); return; }
+
+    const isImageMode = document.getElementById('bloodImageSection').style.display !== 'none';
+
+    if (isImageMode && !bloodImageData) {
+      alert('נא להעלות תמונה של הבדיקה');
+      return;
+    }
+
+    const test = {
+      date,
+      imageMode: isImageMode,
+      image: isImageMode ? bloodImageData : null,
+      glucose: document.getElementById('bGlucose').value,
+      hba1c: document.getElementById('bHba1c').value,
+      cholesterol: document.getElementById('bCholesterol').value,
+      ldl: document.getElementById('bLdl').value,
+      hdl: document.getElementById('bHdl').value,
+      trig: document.getElementById('bTrig').value,
+      alt: document.getElementById('bAlt').value,
+      ast: document.getElementById('bAst').value,
+      crp: document.getElementById('bCrp').value,
+      b12: document.getElementById('bB12').value,
+      ferritin: document.getElementById('bFerritin').value,
+    };
+
+    const tests = JSON.parse(localStorage.getItem('nutri_blood_tests') || '[]');
+    tests.unshift(test);
+    localStorage.setItem('nutri_blood_tests', JSON.stringify(tests));
+
+    closeModal('addBloodModal');
+    openBloodTests();
+  }
+
+  function openMonthly() {
+    const el = document.getElementById('monthlyContent');
+    const allMealsByDay = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
+    const allActsByDay = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
+    const history = JSON.parse(localStorage.getItem('nutri_history') || '[]');
+
+    const today = new Date();
+    const monthNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // Get all days in current month
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let totalMeals = 0, totalActivities = 0, activeDays = 0, activityDays = 0, summaryDays = 0;
+
+    // Build week-by-week breakdown
+    const weeks = [];
+    let currentWeek = { days: [], meals: 0, activities: 0 };
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = new Date(currentYear, currentMonth, day);
+      if (d > today) break;
+      const dayKey = d.toDateString();
+      const dayMeals = allMealsByDay[dayKey] || (dayKey === today.toDateString() ? meals : []);
+      const dayActs = allActsByDay[dayKey] || (dayKey === today.toDateString() ? activities : []);
+      const hasFinal = history.some(h => h.dateKey === dayKey && h.type === 'final');
+
+      if (dayMeals.length > 0) { totalMeals += dayMeals.length; activeDays++; currentWeek.meals += dayMeals.length; }
+      if (dayActs.length > 0) { totalActivities += dayActs.length; activityDays++; currentWeek.activities += dayActs.length; }
+      if (hasFinal) summaryDays++;
+
+      currentWeek.days.push({ day, dayMeals: dayMeals.length, dayActs: dayActs.length, hasFinal });
+
+      // New week on Sunday or last day
+      if (d.getDay() === 6 || day === daysInMonth) {
+        weeks.push({ ...currentWeek });
+        currentWeek = { days: [], meals: 0, activities: 0 };
+      }
+    }
+
+    const hasData = activeDays > 0 || activityDays > 0;
+
+    if (!hasData) {
+      el.innerHTML = '<p style="color:var(--text-soft);text-align:center;padding:20px;">עדיין אין נתונים לחודש זה.<br>המשיכי להשתמש ויופיע כאן 😊</p>';
+      document.getElementById('monthlyModal').classList.add('open');
+      return;
+    }
+
+    // Stats
+    const statsHtml = `
+      <div style="text-align:center;font-size:14px;font-weight:600;color:var(--peach-dark);margin-bottom:12px;">
+        ${monthNames[currentMonth]} ${currentYear}
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:70px;background:var(--peach-light);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--peach-dark);">${activeDays}</div>
+          <div style="font-size:10px;color:var(--peach-dark);">ימים עם מעקב</div>
+        </div>
+        <div style="flex:1;min-width:70px;background:var(--peach-light);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--peach-dark);">${totalMeals}</div>
+          <div style="font-size:10px;color:var(--peach-dark);">ארוחות</div>
+        </div>
+        <div style="flex:1;min-width:70px;background:var(--peach-light);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--peach-dark);">${activityDays}</div>
+          <div style="font-size:10px;color:var(--peach-dark);">ימי ספורט</div>
+        </div>
+        <div style="flex:1;min-width:70px;background:var(--peach-light);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--peach-dark);">${summaryDays}</div>
+          <div style="font-size:10px;color:var(--peach-dark);">סיכומים</div>
+        </div>
+      </div>`;
+
+    // Calendar-style grid
+    const dayLabels = ['א','ב','ג','ד','ה','ו','ש'];
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+
+    let calCells = '';
+    // Day headers
+    calCells += dayLabels.map(l => `<div style="text-align:center;font-size:11px;font-weight:600;color:var(--text-soft);padding:4px 0;">${l}</div>`).join('');
+    // Empty cells before first day
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      calCells += '<div></div>';
+    }
+    // Day cells
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = new Date(currentYear, currentMonth, day);
+      if (d > today) {
+        calCells += `<div style="text-align:center;padding:6px 2px;font-size:12px;color:var(--border);">${day}</div>`;
+        continue;
+      }
+      const dayKey = d.toDateString();
+      const dayMeals = allMealsByDay[dayKey] || (dayKey === today.toDateString() ? meals : []);
+      const dayActs = allActsByDay[dayKey] || (dayKey === today.toDateString() ? activities : []);
+      const hasFinal = history.some(h => h.dateKey === dayKey && h.type === 'final');
+      const isToday = dayKey === today.toDateString();
+
+      let bg = 'transparent';
+      let textColor = 'var(--text-soft)';
+      let dot = '';
+
+      if (dayMeals.length > 0 && dayActs.length > 0) { bg = 'var(--peach-dark)'; textColor = '#fff'; }
+      else if (dayMeals.length > 0) { bg = 'var(--peach-light)'; textColor = 'var(--peach-dark)'; }
+      else if (dayActs.length > 0) { bg = '#EEF4F0'; textColor = '#557A63'; }
+      if (hasFinal) dot = '<div style="width:4px;height:4px;background:var(--peach-dark);border-radius:50%;margin:1px auto 0;"></div>';
+      if (isToday) textColor = bg === 'transparent' ? 'var(--peach-dark)' : textColor;
+
+      calCells += `
+        <div style="text-align:center;padding:4px 2px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:${bg};color:${textColor};font-size:12px;font-weight:${isToday ? '700' : '400'};display:flex;align-items:center;justify-content:center;margin:0 auto;${isToday ? 'outline:2px solid var(--peach);outline-offset:1px;' : ''}">${day}</div>
+          ${dot}
+        </div>`;
+    }
+
+    const calHtml = `
+      <div style="font-size:13px;font-weight:700;color:var(--peach-dark);margin-bottom:8px;">לוח חודשי</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:16px;">
+        ${calCells}
+      </div>`;
+
+    // Legend
+    const legendHtml = `
+      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--text-soft);margin-bottom:14px;">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--peach-dark);margin-left:4px;"></span>תזונה + ספורט</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--peach-light);margin-left:4px;"></span>תזונה בלבד</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EEF4F0;margin-left:4px;"></span>ספורט בלבד</span>
+      </div>`;
+
+    const nutriHtml = `
+      <div style="padding:12px;background:var(--cream);border-radius:12px;font-size:13px;color:var(--text-soft);text-align:center;">
+        ✨ לאחר חיבור Nutri תופיע כאן סקירה חודשית חכמה עם תובנות אישיות
+      </div>`;
+
+    el.innerHTML = statsHtml + calHtml + legendHtml + nutriHtml;
+    document.getElementById('monthlyModal').classList.add('open');
+  }
+
+  function openWeekly() {
+    const history = JSON.parse(localStorage.getItem('nutri_history') || '[]');
+    const el = document.getElementById('weeklyContent');
+
+    // Get last 7 days
+    const today = new Date();
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 6);
+
+    // Build days array for the week
+    const weekDays = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      weekDays.push(d.toDateString());
+    }
+
+    const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+    const monthNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+    // Get data per day
+    const allMealsByDay = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
+    const allActsByDay = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
+
+    // Check if we have any data at all
+    const hasData = weekDays.some(d => allMealsByDay[d] || allActsByDay[d] || history.find(h => h.dateKey === d));
+
+    if (!history.length && !hasData) {
+      el.innerHTML = '<p style="color:var(--text-soft);text-align:center;padding:20px;">עדיין אין מספיק נתונים לסיכום שבועי.<br>המשיכי להשתמש באתר ויופיע כאן 😊</p>';
+      document.getElementById('weeklyModal').classList.add('open');
+      return;
+    }
+
+    // Stats
+    let totalMeals = 0, totalActivities = 0, activeDays = 0, activityDays = 0;
+    const dayRows = weekDays.map(dayKey => {
+      const d = new Date(dayKey);
+      const label = `יום ${dayNames[d.getDay()]}, ${d.getDate()} ב${monthNames[d.getMonth()]}`;
+      const dayMeals = allMealsByDay[dayKey] || (d.toDateString() === today.toDateString() ? meals : []);
+      const dayActs = allActsByDay[dayKey] || (d.toDateString() === today.toDateString() ? activities : []);
+      const dayFeedbacks = history.filter(h => h.dateKey === dayKey);
+      const hasFinal = dayFeedbacks.some(h => h.type === 'final');
+
+      if (dayMeals.length > 0) { totalMeals += dayMeals.length; activeDays++; }
+      if (dayActs.length > 0) { totalActivities += dayActs.length; activityDays++; }
+
+      const isEmpty = dayMeals.length === 0 && dayActs.length === 0;
+
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${label}</div>
+            <div style="font-size:12px;color:var(--text-soft);margin-top:2px;">
+              ${isEmpty ? 'אין נתונים' : `${dayMeals.length} ארוחות · ${dayActs.length} פעילויות`}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            ${dayMeals.length > 0 ? '<span style="font-size:16px;">🍽️</span>' : '<span style="font-size:16px;opacity:0.2;">🍽️</span>'}
+            ${dayActs.length > 0 ? '<span style="font-size:16px;">🏃</span>' : '<span style="font-size:16px;opacity:0.2;">🏃</span>'}
+            ${hasFinal ? '<span style="font-size:16px;">✅</span>' : '<span style="font-size:16px;opacity:0.2;">✅</span>'}
+          </div>
+        </div>`;
+    }).join('');
+
+    // Summary stats cards
+    const statsHtml = `
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <div style="flex:1;background:var(--peach-light);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--peach-dark);">${activeDays}</div>
+          <div style="font-size:11px;color:var(--peach-dark);">ימים פעילים</div>
+        </div>
+        <div style="flex:1;background:var(--peach-light);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--peach-dark);">${totalMeals}</div>
+          <div style="font-size:11px;color:var(--peach-dark);">ארוחות</div>
+        </div>
+        <div style="flex:1;background:var(--peach-light);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--peach-dark);">${totalActivities}</div>
+          <div style="font-size:11px;color:var(--peach-dark);">פעילויות</div>
+        </div>
+        <div style="flex:1;background:var(--peach-light);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--peach-dark);">${activityDays}</div>
+          <div style="font-size:11px;color:var(--peach-dark);">ימי ספורט</div>
+        </div>
+      </div>`;
+
+    el.innerHTML = statsHtml + `
+      <div style="font-size:13px;font-weight:700;color:var(--peach-dark);margin-bottom:8px;">פירוט השבוע</div>
+      ${dayRows}
+      <div style="margin-top:14px;padding:12px;background:var(--cream);border-radius:12px;font-size:13px;color:var(--text-soft);text-align:center;">
+        ✨ לאחר חיבור Nutri תופיע כאן גם סקירה שבועית חכמה
+      </div>`;
+
+    document.getElementById('weeklyModal').classList.add('open');
+  }
+
+  function openHistory() {
+    const history = JSON.parse(localStorage.getItem('nutri_history') || '[]');
+    const el = document.getElementById('historyContent');
+    if (history.length === 0) {
+      el.innerHTML = '<p style="color:var(--text-soft);text-align:center;padding:20px;">עדיין אין היסטוריה שמורה.<br>לאחר הסיכום הראשון היא תופיע כאן 😊</p>';
+    } else {
+      // Group by date
+      const byDate = {};
+      history.forEach(h => {
+        if (!byDate[h.date]) byDate[h.date] = [];
+        byDate[h.date].push(h);
+      });
+      el.innerHTML = Object.entries(byDate).map(([date, entries]) => `
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px;font-weight:700;color:var(--peach-dark);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">${date}</div>
+          ${entries.map(e => `
+            <div style="background:var(--cream);border-radius:12px;padding:12px;margin-bottom:8px;">
+              <div style="font-size:12px;color:var(--text-soft);margin-bottom:6px;">${e.type === 'final' ? '🌙 סיכום יומי סופי' : '☀️ סיכום ביניים'}</div>
+              <div style="font-size:13px;color:var(--text);line-height:1.6;">${e.feedback.substring(0, 200)}${e.feedback.length > 200 ? '...' : ''}</div>
+              <div style="font-size:11px;color:var(--text-soft);margin-top:6px;">${e.meals.length} ארוחות · ${e.activities.length} פעילויות</div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+    document.getElementById('historyModal').classList.add('open');
+  }
+
+  // Render existing data on load
+  renderMeals(false);
+  renderActivities(false);
+
+  function rewave(el) {
+    el.classList.remove('waving');
+    void el.offsetWidth;
+    el.classList.add('waving');
+    setTimeout(() => el.classList.remove('waving'), 2600);
+  }
+
+  function popBtn(el) {
+    el.classList.remove('popped');
+    void el.offsetWidth;
+    el.classList.add('popped');
+    setTimeout(() => el.classList.remove('popped'), 400);
+  }
+
+  function shimmerBtn(el) {
+    el.classList.remove('shimmer');
+    void el.offsetWidth;
+    el.classList.add('shimmer');
+    setTimeout(() => el.classList.remove('shimmer'), 600);
+  }
+
+  function pulseBtn(el) {
+    el.classList.remove('pulsed');
+    void el.offsetWidth;
+    el.classList.add('pulsed');
+    setTimeout(() => el.classList.remove('pulsed'), 450);
+  }
+
+  function tapNav(el) {
+    el.classList.remove('tapped');
+    void el.offsetWidth; // reflow to restart animation
+    el.classList.add('tapped');
+    setTimeout(() => el.classList.remove('tapped'), 350);
+  }
+
+  function openInterim() {
+    document.getElementById('interimContent').innerHTML = meals.length === 0 && activities.length === 0
+      ? '<p class="placeholder">עדיין לא הוזנו ארוחות או פעילויות. הוסיפי נתונים ואז נוכל לתת לך סיכום ביניים 😊</p>'
+      : `<p class="placeholder">הוזנו ${meals.length} ארוחות ו-${activities.length} פעילויות עד כה.</p>
+         <p style="margin-top:12px;color:var(--peach-dark);font-weight:600;">⏳ בקרוב – חיבור למומחה</p>
+         <p style="margin-top:8px;">לאחר חיבור ה-AI תקבלי המלצות מותאמות אישית להמשך היום.</p>`;
+    document.getElementById('interimModal').classList.add('open');
+  }
+
+  function openFinal() {
+    document.getElementById('finalContent').innerHTML = meals.length === 0
+      ? '<p class="placeholder">עדיין לא הוזנו ארוחות להיום.</p>'
+      : `<p class="placeholder">סיכום ל-${now.toLocaleDateString('he-IL')} – ${meals.length} ארוחות, ${activities.length} פעילויות.</p>
+         <p style="margin-top:12px;color:var(--peach-dark);font-weight:600;">⏳ בקרוב – חיבור למומחה</p>
+         <p style="margin-top:8px;">תקבלי סיכום יומי מלא עם פידבק מותאם אישית.</p>`;
+    document.getElementById('finalModal').classList.add('open');
+  }
+</script>
+
+<!-- MODAL: BLOOD TESTS -->
+<div class="modal-overlay" id="bloodModal">
+  <div class="modal" style="max-height:90vh;">
+    <div class="modal-handle"></div>
+    <h3>🩸 בדיקות דם</h3>
+    <div id="bloodContent" style="overflow-y:auto;max-height:70vh;"></div>
+    <button class="modal-save" style="margin-top:16px;" onclick="closeModal('bloodModal')">סגירה</button>
+  </div>
+</div>
+
+<!-- MODAL: ADD BLOOD TEST -->
+<div class="modal-overlay" id="addBloodModal">
+  <div class="modal" style="max-height:90vh;">
+    <div class="modal-handle"></div>
+    <h3>הוספת בדיקת דם</h3>
+    <div style="overflow-y:auto;max-height:65vh;">
+      <div class="form-group">
+        <label class="form-label">תאריך הבדיקה</label>
+        <input type="date" class="form-input" id="bloodDate" style="max-width:180px;">
+      </div>
+
+      <!-- Toggle between image and manual -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="opt-btn selected" id="toggleManual" onclick="switchBloodInput('manual')">הזנה ידנית</button>
+        <button class="opt-btn" id="toggleImage" onclick="switchBloodInput('image')">העלאת צילום</button>
+      </div>
+
+      <!-- Image upload section -->
+      <div id="bloodImageSection" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">📸 העלי צילום של תוצאות הבדיקה</label>
+          <div class="upload-area" onclick="document.getElementById('bloodImageFile').click()">
+            <div class="upload-icon">📋</div>
+            לחצי להעלאת תמונה או PDF
+            <input type="file" id="bloodImageFile" accept="image/*,application/pdf" style="display:none" onchange="handleBloodImageUpload(this)">
+          </div>
+          <div class="upload-confirm" id="bloodImageName"></div>
+        </div>
+        <div id="bloodImagePreview" style="display:none;margin-top:8px;">
+          <img id="bloodImageEl" style="width:100%;border-radius:12px;border:1px solid var(--border);">
+        </div>
+        <div style="background:var(--peach-light);border-radius:12px;padding:12px;font-size:13px;color:var(--peach-dark);margin-top:12px;">
+          💡 לאחר חיבור Nutri, היא תקרא את הערכים מהתמונה אוטומטית. בינתיים הם יישמרו כתמונה.
+        </div>
+      </div>
+
+      <!-- Manual input section -->
+      <div id="bloodManualSection">
+      <div style="font-size:13px;font-weight:600;color:var(--text-soft);margin-bottom:12px;">הזיני את הערכים הרלוונטיים (לא חובה למלא הכל)</div>
+
+      <div class="form-group">
+        <label class="form-label">גלוקוז (Glucose) mg/dl</label>
+        <input type="number" class="form-input" id="bGlucose" placeholder="נורמה: 70-100" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">HbA1C %</label>
+        <input type="number" step="0.1" class="form-input" id="bHba1c" placeholder="נורמה: עד 5.6%" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">כולסטרול כללי mg/dl</label>
+        <input type="number" class="form-input" id="bCholesterol" placeholder="נורמה: עד 200" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">LDL mg/dl</label>
+        <input type="number" class="form-input" id="bLdl" placeholder="נורמה: עד 130" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">HDL mg/dl</label>
+        <input type="number" class="form-input" id="bHdl" placeholder="נשים: מעל 50" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">טריגליצרידים mg/dl</label>
+        <input type="number" class="form-input" id="bTrig" placeholder="נורמה: עד 150" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ALT (GPT) U/l</label>
+        <input type="number" class="form-input" id="bAlt" placeholder="נורמה: עד 31" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">AST (GOT) U/l</label>
+        <input type="number" class="form-input" id="bAst" placeholder="נורמה: עד 31" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CRP mg/dl</label>
+        <input type="number" step="0.1" class="form-input" id="bCrp" placeholder="נורמה: עד 0.5" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ויטמין B12 pg/ml</label>
+        <input type="number" class="form-input" id="bB12" placeholder="נורמה: 211-911" style="max-width:200px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">פריטין ng/ml</label>
+        <input type="number" class="form-input" id="bFerritin" placeholder="נורמה: 7-270" style="max-width:200px;">
+      </div>
+    </div>
+      </div><!-- end bloodManualSection -->
+    <button class="modal-save" onclick="saveBloodTest()">שמירה</button>
+    <button class="modal-cancel" onclick="closeModal('addBloodModal'); openBloodTests()">ביטול</button>
+  </div>
+</div>
+
+<!-- MODAL: MONTHLY -->
+<div class="modal-overlay" id="monthlyModal">
+  <div class="modal" style="max-height:85vh;">
+    <div class="modal-handle"></div>
+    <h3>📊 סיכום חודשי</h3>
+    <div id="monthlyContent" style="overflow-y:auto;max-height:65vh;"></div>
+    <button class="modal-save" style="margin-top:16px;" onclick="closeModal('monthlyModal')">סגירה</button>
+  </div>
+</div>
+
+<!-- MODAL: WEEKLY -->
+<div class="modal-overlay" id="weeklyModal">
+  <div class="modal" style="max-height:85vh;">
+    <div class="modal-handle"></div>
+    <h3>📅 סיכום שבועי</h3>
+    <div id="weeklyContent" style="overflow-y:auto;max-height:65vh;"></div>
+    <button class="modal-save" style="margin-top:16px;" onclick="closeModal('weeklyModal')">סגירה</button>
+  </div>
+</div>
+
+<!-- MODAL: HISTORY -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal" style="max-height:85vh;">
+    <div class="modal-handle"></div>
+    <h3>📖 היסטוריה</h3>
+    <div id="historyContent" style="overflow-y:auto;max-height:60vh;"></div>
+    <button class="modal-save" style="margin-top:16px;" onclick="closeModal('historyModal')">סגירה</button>
+  </div>
+</div>
+
+</body>
+</html>
