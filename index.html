@@ -142,6 +142,25 @@ body {
   background: var(--peach-light);
   border-radius: 6px; padding: 2px 8px;
 }
+.item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 3px 5px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: background 0.15s;
+  opacity: 0.6;
+}
+.action-btn:hover { background: var(--cream); opacity: 1; }
 
 /* ADD BUTTON */
 .add-btn {
@@ -679,7 +698,7 @@ body {
 <div class="modal-overlay" id="mealModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h3>הוספת ארוחה</h3>
+    <h3 id="mealModalTitle">הוספת ארוחה</h3>
     <div class="form-group">
       <label class="form-label">שעת הארוחה</label>
       <input type="time" class="form-input" id="mealTime" style="max-width:140px;">
@@ -718,7 +737,7 @@ body {
 <div class="modal-overlay" id="activityModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h3>הוספת פעילות גופנית</h3>
+    <h3 id="actModalTitle">הוספת פעילות גופנית</h3>
     <div class="form-group">
       <label class="form-label">סוג הפעילות</label>
       <input type="text" class="form-input full" id="actType" placeholder="הליכה, שחייה, יוגה, אופניים...">
@@ -844,6 +863,7 @@ body {
   let meals = JSON.parse(localStorage.getItem('nutri_meals') || '[]');
   let activities = JSON.parse(localStorage.getItem('nutri_activities') || '[]');
   let selQty = '', selIntensity = '';
+  let editMealIdx = -1, editActivityIdx = -1;
 
   // Save helpers
   function saveMealsToStorage() {
@@ -896,9 +916,17 @@ body {
   }
 
   // MEAL
-  function openMealModal() {
-    document.getElementById('mealTime').value = nowTime();
-    document.getElementById('mealText').value = '';
+  function openMealModal(idx) {
+    editMealIdx = (idx !== undefined) ? idx : -1;
+    document.getElementById('mealModalTitle').textContent = editMealIdx >= 0 ? 'עריכת ארוחה' : 'הוספת ארוחה';
+    if (editMealIdx >= 0) {
+      const m = meals[editMealIdx];
+      document.getElementById('mealTime').value = m.time;
+      document.getElementById('mealText').value = m.desc;
+    } else {
+      document.getElementById('mealTime').value = nowTime();
+      document.getElementById('mealText').value = '';
+    }
     document.getElementById('uploadName').textContent = '';
     document.getElementById('qtySection').style.display = 'none';
     selQty = '';
@@ -921,11 +949,23 @@ body {
     if (!text && !uploaded) { alert('נא להזין מצרכים או להעלות צילום'); return; }
     let desc = text;
     if (uploaded) desc += (desc ? ' + ' : '') + `מוצר סרוק${selQty ? ' (' + selQty + ')' : ''}`;
-    meals.push({ time, desc });
+    if (editMealIdx >= 0) {
+      meals[editMealIdx] = { time, desc };
+    } else {
+      meals.push({ time, desc });
+    }
+    editMealIdx = -1;
     meals.sort((a,b) => a.time.localeCompare(b.time));
     saveMealsToStorage();
     renderMeals(true);
     closeModal('mealModal');
+  }
+
+  function deleteMeal(idx) {
+    if (!confirm('למחוק ארוחה זו?')) return;
+    meals.splice(idx, 1);
+    saveMealsToStorage();
+    renderMeals(false);
   }
 
   function renderMeals(animate) {
@@ -936,16 +976,33 @@ body {
       <div class="item-card${animate && i === meals.length-1 ? ' new' : ''}">
         <div class="item-time">${m.time}</div>
         <div class="item-info"><div class="item-name">${m.desc}</div></div>
+        <div class="item-actions">
+          <button class="action-btn" onclick="openMealModal(${i})" title="עריכה">✏️</button>
+          <button class="action-btn" onclick="deleteMeal(${i})" title="מחיקה">🗑️</button>
+        </div>
       </div>`).join('');
   }
 
   // ACTIVITY
-  function openActivityModal() {
-    document.getElementById('actType').value = '';
-    document.getElementById('actDuration').value = '';
-    document.getElementById('actTime').value = '';
-    selIntensity = '';
-    document.querySelectorAll('#activityModal .opt-btn').forEach(b => b.classList.remove('selected'));
+  function openActivityModal(idx) {
+    editActivityIdx = (idx !== undefined) ? idx : -1;
+    document.getElementById('actModalTitle').textContent = editActivityIdx >= 0 ? 'עריכת פעילות גופנית' : 'הוספת פעילות גופנית';
+    if (editActivityIdx >= 0) {
+      const a = activities[editActivityIdx];
+      document.getElementById('actType').value = a.type;
+      document.getElementById('actDuration').value = a.duration;
+      document.getElementById('actTime').value = a.time || '';
+      selIntensity = a.intensity;
+      document.querySelectorAll('#activityModal .opt-btn').forEach(b => {
+        b.classList.toggle('selected', b.textContent === a.intensity);
+      });
+    } else {
+      document.getElementById('actType').value = '';
+      document.getElementById('actDuration').value = '';
+      document.getElementById('actTime').value = '';
+      selIntensity = '';
+      document.querySelectorAll('#activityModal .opt-btn').forEach(b => b.classList.remove('selected'));
+    }
     document.getElementById('activityModal').classList.add('open');
   }
 
@@ -956,10 +1013,22 @@ body {
     if (!type) { alert('נא להזין סוג פעילות'); return; }
     if (!duration) { alert('נא להזין משך בדקות'); return; }
     if (!selIntensity) { alert('נא לבחור עצימות'); return; }
-    activities.push({ type, duration, intensity: selIntensity, time });
+    if (editActivityIdx >= 0) {
+      activities[editActivityIdx] = { type, duration, intensity: selIntensity, time };
+    } else {
+      activities.push({ type, duration, intensity: selIntensity, time });
+    }
+    editActivityIdx = -1;
     saveActivitiesToStorage();
     renderActivities(true);
     closeModal('activityModal');
+  }
+
+  function deleteActivity(idx) {
+    if (!confirm('למחוק פעילות זו?')) return;
+    activities.splice(idx, 1);
+    saveActivitiesToStorage();
+    renderActivities(false);
   }
 
   function renderActivities(animate) {
@@ -972,6 +1041,10 @@ body {
         <div class="item-info">
           <div class="item-name">${a.type} · ${a.duration} דקות</div>
           <div class="item-tags"><span class="tag">${a.intensity}</span></div>
+        </div>
+        <div class="item-actions">
+          <button class="action-btn" onclick="openActivityModal(${i})" title="עריכה">✏️</button>
+          <button class="action-btn" onclick="deleteActivity(${i})" title="מחיקה">🗑️</button>
         </div>
       </div>`).join('');
   }
