@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light only">
 <title>NutriTrack</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -55,6 +56,19 @@ body {
   color: var(--text-soft); transition: color 0.15s;
 }
 .topbar-settings:hover { color: var(--peach-dark); }
+
+/* AI RESPONSE MARKDOWN */
+.ai-response { font-size: 14px; line-height: 1.8; color: var(--text); }
+.ai-response h1, .ai-response h2, .ai-response h3 {
+  font-size: 15px; font-weight: 700; color: var(--peach-dark);
+  margin: 14px 0 6px;
+}
+.ai-response p { margin-bottom: 10px; }
+.ai-response ul, .ai-response ol { padding-right: 20px; margin-bottom: 10px; }
+.ai-response li { margin-bottom: 4px; }
+.ai-response strong { font-weight: 700; color: var(--text); }
+.ai-response em { color: var(--text-soft); }
+.ai-response hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 
 /* AI LOADING */
 .ai-loading {
@@ -1940,7 +1954,7 @@ body {
 
       const data = await resp.json();
       const text = data.content?.[0]?.text || '';
-      contentEl.innerHTML = `<div style="font-size:14px;line-height:1.8;white-space:pre-wrap;">${text}</div>`;
+      contentEl.innerHTML = `<div class="ai-response">${marked.parse(text)}</div>`;
       return text;
     } catch (e) {
       contentEl.innerHTML = `<p style="color:#c0392b;font-size:14px;">❌ שגיאת רשת: ${e.message}</p>`;
