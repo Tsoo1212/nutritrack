@@ -1784,6 +1784,10 @@ body {
   }
 
   /* ---- SETTINGS ---- */
+  // Sonnet 4.6 pricing (USD per token)
+  const PRICE_INPUT  = 3.00  / 1_000_000;
+  const PRICE_OUTPUT = 15.00 / 1_000_000;
+
   function openSettings() {
     const stored = localStorage.getItem('nutri_api_key') || '';
     const input = document.getElementById('apiKeyInput');
@@ -1798,7 +1802,44 @@ body {
     } else {
       status.style.display = 'none';
     }
+
+    // Render usage panel
+    const usage = JSON.parse(localStorage.getItem('nutri_usage') || '{"input":0,"output":0,"calls":0}');
+    const costUSD  = usage.input * PRICE_INPUT + usage.output * PRICE_OUTPUT;
+    const costILS  = costUSD * 3.7; // approximate ILS rate
+    const usageEl  = document.getElementById('usagePanel');
+    if (usage.calls === 0) {
+      usageEl.innerHTML = '<p style="color:var(--text-soft);font-size:13px;">עדיין לא בוצעו קריאות API מהאפליקציה הזו.</p>';
+    } else {
+      usageEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div style="background:var(--peach-light);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:18px;font-weight:700;color:var(--peach-dark);">${usage.calls}</div>
+            <div style="font-size:11px;color:var(--peach-dark);">קריאות API</div>
+          </div>
+          <div style="background:var(--peach-light);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:18px;font-weight:700;color:var(--peach-dark);">${(usage.input + usage.output).toLocaleString()}</div>
+            <div style="font-size:11px;color:var(--peach-dark);">טוקנים סה"כ</div>
+          </div>
+        </div>
+        <div style="background:var(--cream);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:13px;color:var(--text-soft);">עלות משוערת</span>
+          <span style="font-size:15px;font-weight:700;color:var(--peach-dark);">$${costUSD.toFixed(4)} <span style="font-size:12px;font-weight:400;color:var(--text-soft);">(≈ ₪${costILS.toFixed(2)})</span></span>
+        </div>
+        <div style="font-size:11px;color:var(--text-soft);margin-bottom:8px;">
+          קלט: ${usage.input.toLocaleString()} טוקנים · פלט: ${usage.output.toLocaleString()} טוקנים<br>
+          מחיר לפי Claude Sonnet 4.6 – $3/M קלט, $15/M פלט
+        </div>
+        <button onclick="resetUsage()" style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:7px 14px;font-size:12px;color:var(--text-soft);cursor:pointer;font-family:'Heebo',sans-serif;">איפוס נתוני שימוש</button>`;
+    }
+
     document.getElementById('settingsModal').classList.add('open');
+  }
+
+  function resetUsage() {
+    if (!confirm('לאפס את נתוני השימוש?')) return;
+    localStorage.removeItem('nutri_usage');
+    openSettings();
   }
 
   function saveApiKey() {
@@ -1893,6 +1934,15 @@ body {
       const data = await resp.json();
       const text = data.content?.[0]?.text || '';
       contentEl.innerHTML = `<div class="ai-response">${marked.parse(text)}</div>`;
+
+      // Accumulate token usage
+      const u = data.usage || {};
+      const stored = JSON.parse(localStorage.getItem('nutri_usage') || '{"input":0,"output":0,"calls":0}');
+      stored.input  += u.input_tokens  || 0;
+      stored.output += u.output_tokens || 0;
+      stored.calls  += 1;
+      localStorage.setItem('nutri_usage', JSON.stringify(stored));
+
       return text;
     } catch (e) {
       contentEl.innerHTML = `<p style="color:#c0392b;font-size:14px;">❌ שגיאת רשת: ${e.message}</p>`;
@@ -2093,7 +2143,10 @@ body {
     </div>
     <div id="apiKeyStatus" style="font-size:13px;margin-bottom:12px;display:none;"></div>
     <button class="modal-save" onclick="saveApiKey()">שמירה</button>
-    <button class="modal-cancel" onclick="closeModal('settingsModal')">ביטול</button>
+    <div style="border-top:1px solid var(--border);margin:18px 0 14px;"></div>
+    <div style="font-size:13px;font-weight:700;color:var(--peach-dark);margin-bottom:10px;">📊 שימוש ועלות (האפליקציה הזו בלבד)</div>
+    <div id="usagePanel"></div>
+    <button class="modal-cancel" onclick="closeModal('settingsModal')">סגירה</button>
   </div>
 </div>
 
