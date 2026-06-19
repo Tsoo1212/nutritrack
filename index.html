@@ -49,6 +49,27 @@ body {
 .topbar-logo { font-size: 20px; font-weight: 700; color: var(--peach-dark); }
 .topbar-logo span { color: var(--peach); font-weight: 300; }
 .topbar-date { font-size: 13px; color: var(--text-soft); }
+.topbar-settings {
+  background: none; border: none; cursor: pointer;
+  font-size: 20px; padding: 2px 4px; line-height: 1;
+  color: var(--text-soft); transition: color 0.15s;
+}
+.topbar-settings:hover { color: var(--peach-dark); }
+
+/* AI LOADING */
+.ai-loading {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 14px; padding: 28px 0 12px;
+}
+.ai-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--peach-light);
+  border-top-color: var(--peach-dark);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ai-loading-text { font-size: 14px; color: var(--text-soft); }
 
 /* GREETING */
 .greeting { padding: 22px 20px 10px; }
@@ -619,6 +640,7 @@ body {
 <div class="topbar">
   <div class="topbar-logo">Nutri<span>Track</span></div>
   <div class="topbar-date" id="todayDate"></div>
+  <button class="topbar-settings" onclick="openSettings()" title="הגדרות">⚙️</button>
 </div>
 
 <div class="sky-scene sky-morning" id="skyScene">
@@ -1809,22 +1831,167 @@ body {
     setTimeout(() => el.classList.remove('tapped'), 350);
   }
 
+  /* ---- SETTINGS ---- */
+  function openSettings() {
+    const stored = localStorage.getItem('nutri_api_key') || '';
+    const input = document.getElementById('apiKeyInput');
+    input.value = stored;
+    input.type = 'password';
+    document.getElementById('apiKeyToggle').textContent = '👁️';
+    const status = document.getElementById('apiKeyStatus');
+    if (stored) {
+      status.style.display = 'block';
+      status.style.color = 'var(--peach-dark)';
+      status.textContent = '✅ מפתח שמור – ' + stored.slice(0, 10) + '••••••••••••';
+    } else {
+      status.style.display = 'none';
+    }
+    document.getElementById('settingsModal').classList.add('open');
+  }
+
+  function saveApiKey() {
+    const val = document.getElementById('apiKeyInput').value.trim();
+    if (!val) { alert('נא להזין מפתח API'); return; }
+    if (!val.startsWith('sk-ant-')) { alert('מפתח לא תקין – חייב להתחיל ב-sk-ant-'); return; }
+    localStorage.setItem('nutri_api_key', val);
+    closeModal('settingsModal');
+  }
+
+  function toggleApiKeyVisibility() {
+    const input = document.getElementById('apiKeyInput');
+    const btn = document.getElementById('apiKeyToggle');
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁️'; }
+  }
+
+  /* ---- DYNAMIC SYSTEM PROMPT ---- */
+  function buildSystemPrompt() {
+    // Start from the base prompt
+    let system = NUTRI_SYSTEM;
+
+    // Inject latest blood test values from localStorage if available
+    const tests = JSON.parse(localStorage.getItem('nutri_blood_tests') || '[]');
+    if (tests.length > 0) {
+      const latest = tests[0];
+      const fieldMap = {
+        glucose: 'Glucose', hba1c: 'HbA1C', cholesterol: 'כולסטרול כללי',
+        ldl: 'LDL', hdl: 'HDL', trig: 'טריגליצרידים',
+        alt: 'ALT', ast: 'AST', crp: 'CRP', b12: 'ויטמין B12', ferritin: 'פריטין'
+      };
+      const units = {
+        glucose: 'mg/dl', hba1c: '%', cholesterol: 'mg/dl', ldl: 'mg/dl',
+        hdl: 'mg/dl', trig: 'mg/dl', alt: 'U/l', ast: 'U/l',
+        crp: 'mg/dl', b12: 'pg/ml', ferritin: 'ng/ml'
+      };
+      const lines = Object.entries(fieldMap)
+        .filter(([k]) => latest[k] !== '' && latest[k] !== undefined && latest[k] !== null)
+        .map(([k, label]) => `- ${label}: ${latest[k]} ${units[k]}`);
+
+      if (lines.length > 0) {
+        system = system.replace(
+          /בדיקות דם עדכניות \(האחרונות\):[\s\S]*?(?=\nבדיקות לפני|\nכולסטרול)/,
+          `בדיקות דם עדכניות (מתאריך ${latest.date}):\n${lines.join('\n')}\n\n`
+        );
+      }
+    }
+    return system;
+  }
+
+  /* ---- AI CALL ---- */
+  async function callNutri(userMessage, contentEl) {
+    const apiKey = localStorage.getItem('nutri_api_key');
+    if (!apiKey) {
+      contentEl.innerHTML = `
+        <p style="color:var(--peach-dark);font-weight:600;margin-bottom:10px;">🔑 נדרש מפתח API</p>
+        <p style="font-size:14px;color:var(--text-soft);margin-bottom:16px;">כדי לקבל סיכום חכם, הזיני את מפתח ה-API שלך מ-Anthropic.</p>
+        <button class="modal-save" onclick="closeModal('interimModal');closeModal('finalModal');openSettings()">פתיחת הגדרות</button>`;
+      return;
+    }
+
+    contentEl.innerHTML = `
+      <div class="ai-loading">
+        <div class="ai-spinner"></div>
+        <div class="ai-loading-text">Nutri חושבת עליך... ✨</div>
+      </div>`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          system: buildSystemPrompt(),
+          messages: [{ role: 'user', content: userMessage }]
+        })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        const msg = err.error?.message || `שגיאה ${resp.status}`;
+        contentEl.innerHTML = `<p style="color:#c0392b;font-size:14px;">❌ ${msg}</p>`;
+        return;
+      }
+
+      const data = await resp.json();
+      const text = data.content?.[0]?.text || '';
+      contentEl.innerHTML = `<div style="font-size:14px;line-height:1.8;white-space:pre-wrap;">${text}</div>`;
+      return text;
+    } catch (e) {
+      contentEl.innerHTML = `<p style="color:#c0392b;font-size:14px;">❌ שגיאת רשת: ${e.message}</p>`;
+    }
+  }
+
+  /* ---- MEAL/ACTIVITY FORMATTER ---- */
+  function formatDayForAI() {
+    const mealLines = meals.length
+      ? meals.map(m => `  ${m.time} – ${m.desc}`).join('\n')
+      : '  (לא הוזנו ארוחות)';
+    const actLines = activities.length
+      ? activities.map(a => `  ${a.time || '?'} – ${a.type}, ${a.duration} דקות, עצימות ${a.intensity}`).join('\n')
+      : '  (לא הוזנה פעילות)';
+    return `ארוחות היום:\n${mealLines}\n\nפעילות גופנית:\n${actLines}`;
+  }
+
   function openInterim() {
-    document.getElementById('interimContent').innerHTML = meals.length === 0 && activities.length === 0
-      ? '<p class="placeholder">עדיין לא הוזנו ארוחות או פעילויות. הוסיפי נתונים ואז נוכל לתת לך סיכום ביניים 😊</p>'
-      : `<p class="placeholder">הוזנו ${meals.length} ארוחות ו-${activities.length} פעילויות עד כה.</p>
-         <p style="margin-top:12px;color:var(--peach-dark);font-weight:600;">⏳ בקרוב – חיבור למומחה</p>
-         <p style="margin-top:8px;">לאחר חיבור ה-AI תקבלי המלצות מותאמות אישית להמשך היום.</p>`;
+    if (meals.length === 0 && activities.length === 0) {
+      document.getElementById('interimContent').innerHTML =
+        '<p class="placeholder">עדיין לא הוזנו ארוחות או פעילויות. הוסיפי נתונים ואז נוכל לתת לך סיכום ביניים 😊</p>';
+      document.getElementById('interimModal').classList.add('open');
+      return;
+    }
     document.getElementById('interimModal').classList.add('open');
+    const contentEl = document.getElementById('interimContent');
+    const userMsg = `סיכום ביניים – אמצע היום.\n\n${formatDayForAI()}\n\nאנא תני לי המלצות ספציפיות להמשך היום – מה לאכול, מה להימנע, ואם כדאי להוסיף פעילות.`;
+    callNutri(userMsg, contentEl).then(text => {
+      if (text) {
+        saveFeedbackToHistory('interim', text);
+        handleSummaryResult(text, 'interimModal');
+      }
+    });
   }
 
   function openFinal() {
-    document.getElementById('finalContent').innerHTML = meals.length === 0
-      ? '<p class="placeholder">עדיין לא הוזנו ארוחות להיום.</p>'
-      : `<p class="placeholder">סיכום ל-${now.toLocaleDateString('he-IL')} – ${meals.length} ארוחות, ${activities.length} פעילויות.</p>
-         <p style="margin-top:12px;color:var(--peach-dark);font-weight:600;">⏳ בקרוב – חיבור למומחה</p>
-         <p style="margin-top:8px;">תקבלי סיכום יומי מלא עם פידבק מותאם אישית.</p>`;
+    if (meals.length === 0) {
+      document.getElementById('finalContent').innerHTML =
+        '<p class="placeholder">עדיין לא הוזנו ארוחות להיום.</p>';
+      document.getElementById('finalModal').classList.add('open');
+      return;
+    }
     document.getElementById('finalModal').classList.add('open');
+    const contentEl = document.getElementById('finalContent');
+    const userMsg = `סיכום יומי סופי – סוף היום.\n\n${formatDayForAI()}\n\nאנא תני לי סיכום מלא של היום – מה היה טוב, מה פחות, ומה כדאי לשפר מחר.`;
+    callNutri(userMsg, contentEl).then(text => {
+      if (text) {
+        saveFeedbackToHistory('final', text);
+        handleSummaryResult(text, 'finalModal');
+      }
+    });
   }
 </script>
 
@@ -1956,6 +2123,25 @@ body {
     <h3>📖 היסטוריה</h3>
     <div id="historyContent" style="overflow-y:auto;max-height:60vh;"></div>
     <button class="modal-save" style="margin-top:16px;" onclick="closeModal('historyModal')">סגירה</button>
+  </div>
+</div>
+
+<!-- MODAL: SETTINGS -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>⚙️ הגדרות</h3>
+    <div class="form-group">
+      <label class="form-label">מפתח API של Claude (Anthropic)</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="password" class="form-input" id="apiKeyInput" placeholder="sk-ant-..." style="flex:1;" autocomplete="off">
+        <button onclick="toggleApiKeyVisibility()" style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;font-size:14px;color:var(--text-soft);" id="apiKeyToggle">👁️</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-soft);margin-top:6px;">המפתח נשמר רק במכשיר שלך ולא נשלח לשום שרת חיצוני מלבד Anthropic.</div>
+    </div>
+    <div id="apiKeyStatus" style="font-size:13px;margin-bottom:12px;display:none;"></div>
+    <button class="modal-save" onclick="saveApiKey()">שמירה</button>
+    <button class="modal-cancel" onclick="closeModal('settingsModal')">ביטול</button>
   </div>
 </div>
 
