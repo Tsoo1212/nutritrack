@@ -312,11 +312,10 @@ body {
 }
 .wave-emoji {
   display: inline-block;
-  animation: wave 2.6s ease-in-out 0.4s 1;
   transform-origin: 70% 80%;
 }
 .wave-emoji.waving {
-  animation: wave 2.6s ease-in-out;
+  animation: wave 4s ease-in-out;
 }
 
 /* NAV TAP ANIMATION */
@@ -378,6 +377,241 @@ body {
   100% { opacity: 1; transform: translateY(0); }
 }
 .item-card.new { animation: slideIn 0.35s ease; }
+
+/* ===================== */
+/* WEATHER/TIME EMOJI    */
+/* ===================== */
+.top-emoji {
+  font-size: 28px;
+  display: block;
+  text-align: center;
+  padding: 8px 0 0;
+  animation: emojiFloat 3s ease-in-out infinite;
+}
+@keyframes emojiFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ===================== */
+/* SCREEN TRANSITION     */
+/* ===================== */
+@keyframes screenSlideIn {
+  0%   { opacity: 0; transform: translateY(16px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal.animating {
+  animation: screenSlideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ===================== */
+/* CONFETTI              */
+/* ===================== */
+#confettiCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+}
+
+/* ===================== */
+/* COMIC MAGNIFIER       */
+/* ===================== */
+.comic-bubble {
+  display: none;
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9998;
+  text-align: center;
+  animation: bubblePop 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes bubblePop {
+  0%   { transform: translateX(-50%) scale(0.5); opacity: 0; }
+  70%  { transform: translateX(-50%) scale(1.1); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+.comic-bubble .bubble-body {
+  background: white;
+  border: 3px solid var(--text);
+  border-radius: 20px;
+  padding: 16px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  position: relative;
+  box-shadow: 4px 4px 0px var(--text);
+  max-width: 260px;
+}
+.comic-bubble .bubble-body::after {
+  content: '';
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 10px solid transparent;
+  border-top-color: var(--text);
+}
+.comic-bubble .bubble-body::before {
+  content: '';
+  position: absolute;
+  bottom: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 9px solid transparent;
+  border-top-color: white;
+  z-index: 1;
+}
+.comic-bubble .magnifier {
+  font-size: 48px;
+  display: block;
+  margin-top: 8px;
+  animation: magnifierWiggle 1s ease-in-out infinite;
+}
+@keyframes magnifierWiggle {
+  0%, 100% { transform: rotate(-10deg); }
+  50%       { transform: rotate(10deg); }
+}
+
+/* ===================== */
+/* SKY SCENE             */
+/* ===================== */
+.sky-scene {
+  width: 100%;
+  height: 110px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  transition: background 2s ease;
+}
+
+/* Morning */
+.sky-morning { background: linear-gradient(180deg, #C8E4F4 0%, #D8EDF8 50%, #E8F4FC 100%); }
+/* Noon */
+.sky-noon { background: linear-gradient(180deg, #4A9FD4 0%, #7EC5E8 50%, #C8E8F4 100%); }
+/* Evening */
+.sky-evening { background: linear-gradient(180deg, #C06858 0%, #D88070 18%, #E8A080 38%, #F0C098 62%, #F8DCB8 82%, #FDF0D4 100%); }
+/* Night */
+.sky-night { background: linear-gradient(180deg, #0A1628 0%, #1A2A48 50%, #2A3A60 100%); }
+
+/* SUN */
+.sky-sun {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FFE566 40%, #FFB800 100%);
+  box-shadow: 0 0 20px 8px rgba(255,200,0,0.4);
+  transition: all 2s ease;
+}
+
+/* MOON */
+.sky-moon {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FFFDE0 40%, #E8E4A0 100%);
+  box-shadow: 0 0 16px 4px rgba(255,255,200,0.3);
+  display: none;
+}
+.sky-moon::after {
+  content: '';
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 60%; height: 60%;
+  border-radius: 50%;
+  background: rgba(200,196,140,0.3);
+}
+
+/* CLOUDS */
+.cloud {
+  position: absolute;
+  background: white;
+  border-radius: 50px;
+  opacity: 0.9;
+}
+.cloud::before, .cloud::after {
+  content: '';
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+}
+
+/* STARS */
+.star-dot {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: starTwinkle 2s ease-in-out infinite;
+}
+@keyframes starTwinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.6); }
+}
+
+/* BIRDS */
+.bird {
+  position: absolute;
+  font-size: 14px;
+  animation: birdFly 6s linear infinite;
+  opacity: 0.8;
+}
+@keyframes birdFly {
+  0%   { transform: translateX(-20px) translateY(0); }
+  25%  { transform: translateX(10px) translateY(-6px); }
+  50%  { transform: translateX(40px) translateY(0); }
+  75%  { transform: translateX(70px) translateY(-4px); }
+  100% { transform: translateX(100px) translateY(0); opacity: 0; }
+}
+
+/* HORIZON GLOW for evening */
+.horizon-glow {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 30px;
+  background: linear-gradient(180deg, transparent, rgba(255,140,60,0.3));
+  display: none;
+}
+@keyframes cloudDrift {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-60px); }
+}
+@keyframes birdFlyLTR {
+  0%   { transform: translateX(-80px); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(110vw); opacity: 0; }
+}
+@keyframes reflShimmer {
+  0%, 100% { opacity: 0.4; transform: translateX(-50%) scaleX(1); }
+  50%       { opacity: 1;   transform: translateX(-50%) scaleX(1.15); }
+}
+@keyframes sparkleTwinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.3); }
+}
+@keyframes sunRayDrop {
+  0%   { transform: translateY(-10px); opacity: 0; }
+  20%  { opacity: 0.6; }
+  80%  { opacity: 0.3; }
+  100% { transform: translateY(14px); opacity: 0; }
+}
+@keyframes waveMove {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.sea-wave-wrap {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 40px;
+  overflow: hidden;
+}
+.sea-wave {
+  position: absolute;
+  bottom: 0;
+  width: 200%;
+  animation: waveMove 4s linear infinite;
+}
 </style>
 </head>
 <body>
@@ -387,6 +621,15 @@ body {
   <div class="topbar-date" id="todayDate"></div>
 </div>
 
+<div class="sky-scene sky-morning" id="skyScene">
+  <!-- Sun / Moon injected by JS -->
+</div>
+<div style="display:flex;gap:6px;padding:8px 16px;background:var(--white);border-bottom:1px solid var(--border);">
+  <button onclick="previewSky('morning')" style="flex:1;padding:5px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-size:12px;font-family:'Heebo',sans-serif;cursor:pointer;">🌤️ בוקר</button>
+  <button onclick="previewSky('noon')" style="flex:1;padding:5px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-size:12px;font-family:'Heebo',sans-serif;cursor:pointer;">☀️ צהריים</button>
+  <button onclick="previewSky('evening')" style="flex:1;padding:5px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-size:12px;font-family:'Heebo',sans-serif;cursor:pointer;">🌅 ערב</button>
+  <button onclick="previewSky('night')" style="flex:1;padding:5px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-size:12px;font-family:'Heebo',sans-serif;cursor:pointer;">🌙 לילה</button>
+</div>
 <div class="greeting">
   <h2>שלום צוף <span class="wave-emoji" onclick="rewave(this)" style="cursor:pointer;">👋</span></h2>
   <p>בואי נעקוב יחד אחרי היום שלך</p>
@@ -435,6 +678,14 @@ body {
 </div>
 
 <div class="bottom-spacer"></div>
+
+<canvas id="confettiCanvas"></canvas>
+<div class="comic-bubble" id="comicBubble">
+  <div class="bubble-body">
+    <span id="comicText">בואי נסתכל על זה מקרוב 🔍</span>
+    <span class="magnifier">🔍</span>
+  </div>
+</div>
 
 <div class="bottom-nav">
   <div class="nav-item active" onclick="tapNav(this)">
@@ -534,7 +785,7 @@ body {
     <div class="modal-handle"></div>
     <h3>☀️ סיכום ביניים</h3>
     <div class="summary-content" id="interimContent"></div>
-    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('interimModal')">סגירה</button>
+    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('interimModal'); hideComicBubble()">סגירה</button>
   </div>
 </div>
 
@@ -544,7 +795,7 @@ body {
     <div class="modal-handle"></div>
     <h3>🌙 סיכום יומי סופי</h3>
     <div class="summary-content" id="finalContent"></div>
-    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('finalModal')">סגירה</button>
+    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('finalModal'); hideComicBubble()">סגירה</button>
   </div>
 </div>
 
@@ -1169,12 +1420,372 @@ body {
   renderMeals(false);
   renderActivities(false);
 
+
+  /* ---- SKY SCENE ---- */
+  function buildEvening(scene) {
+    scene.className = 'sky-scene sky-evening';
+    scene.innerHTML = '';
+
+    // Sea background with depth gradient
+    const sea = document.createElement('div');
+    sea.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:46px;background:linear-gradient(180deg, #4A7488 0%, #3E5F70 35%, #2E4A58 70%, #243A46 100%);overflow:hidden;';
+    scene.appendChild(sea);
+
+    // Subtle horizon foam line where sky meets sea
+    const foam = document.createElement('div');
+    foam.style.cssText = 'position:absolute;bottom:44px;left:0;right:0;height:3px;background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,235,210,0.35) 50%, rgba(255,255,255,0) 100%);';
+    scene.appendChild(foam);
+
+    // Wide rolling wave layer (back, slow, subtle)
+    const w0 = document.createElement('div');
+    w0.style.cssText = 'position:absolute;bottom:30px;left:0;width:200%;height:18px;overflow:hidden;animation:waveMove 10s linear infinite;opacity:0.6;';
+    w0.innerHTML = '<svg width="100%" height="18" viewBox="0 0 800 18" preserveAspectRatio="none"><defs><linearGradient id="wg0" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#7FA8B8"/><stop offset="100%" stop-color="#4F7A8C"/></linearGradient></defs><path d="M0,9 Q50,1 100,9 Q150,17 200,9 Q250,1 300,9 Q350,17 400,9 Q450,1 500,9 Q550,17 600,9 Q650,1 700,9 Q750,17 800,9 L800,18 L0,18 Z" fill="url(#wg0)"/></svg>';
+    scene.appendChild(w0);
+
+    // Animated wave layer 1 (mid)
+    const w1 = document.createElement('div');
+    w1.style.cssText = 'position:absolute;bottom:22px;left:0;width:200%;height:16px;overflow:hidden;animation:waveMove 4s linear infinite;';
+    w1.innerHTML = '<svg width="100%" height="16" viewBox="0 0 800 16" preserveAspectRatio="none"><defs><linearGradient id="wg1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5C8698"/><stop offset="100%" stop-color="#2E5060"/></linearGradient></defs><path d="M0,8 Q25,0 50,8 Q75,16 100,8 Q125,0 150,8 Q175,16 200,8 Q225,0 250,8 Q275,16 300,8 Q325,0 350,8 Q375,16 400,8 Q425,0 450,8 Q475,16 500,8 Q525,0 550,8 Q575,16 600,8 Q625,0 650,8 Q675,16 700,8 Q725,0 750,8 Q775,16 800,8 L800,16 L0,16 Z" fill="url(#wg1)" opacity="0.9"/></svg>';
+    scene.appendChild(w1);
+
+    // Animated wave layer 2 (front, faster, darker)
+    const w2 = document.createElement('div');
+    w2.style.cssText = 'position:absolute;bottom:10px;left:0;width:200%;height:14px;overflow:hidden;animation:waveMove 7s linear infinite reverse;';
+    w2.innerHTML = '<svg width="100%" height="14" viewBox="0 0 800 14" preserveAspectRatio="none"><defs><linearGradient id="wg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#365C6E"/><stop offset="100%" stop-color="#1A3440"/></linearGradient></defs><path d="M0,7 Q33,0 66,7 Q99,14 132,7 Q165,0 198,7 Q231,14 264,7 Q297,0 330,7 Q363,14 396,7 Q429,0 462,7 Q495,14 528,7 Q561,0 594,7 Q627,14 660,7 Q693,0 726,7 Q759,14 800,7 L800,14 L0,14 Z" fill="url(#wg2)"/></svg>';
+    scene.appendChild(w2);
+
+    // Foreground ripple layer (fast, tight, near bottom)
+    const w3 = document.createElement('div');
+    w3.style.cssText = 'position:absolute;bottom:0px;left:0;width:200%;height:10px;overflow:hidden;animation:waveMove 3s linear infinite;opacity:0.8;';
+    w3.innerHTML = '<svg width="100%" height="10" viewBox="0 0 800 10" preserveAspectRatio="none"><defs><linearGradient id="wg3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#243C48"/><stop offset="100%" stop-color="#10222A"/></linearGradient></defs><path d="M0,5 Q15,1 30,5 Q45,9 60,5 Q75,1 90,5 Q105,9 120,5 Q135,1 150,5 Q165,9 180,5 Q195,1 210,5 Q225,9 240,5 Q255,1 270,5 Q285,9 300,5 Q315,1 330,5 Q345,9 360,5 Q375,1 390,5 Q405,9 420,5 Q435,1 450,5 Q465,9 480,5 Q495,1 510,5 Q525,9 540,5 Q555,1 570,5 Q585,9 600,5 Q615,1 630,5 Q645,9 660,5 Q675,1 690,5 Q705,9 720,5 Q735,1 750,5 Q765,9 780,5 Q795,1 800,5 L800,10 L0,10 Z" fill="url(#wg3)"/></svg>';
+    scene.appendChild(w3);
+
+    // Sun (half above horizon)
+    const sun = document.createElement('div');
+    sun.style.cssText = 'position:absolute;width:62px;height:62px;bottom:26px;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,#FFE898 15%,#FFC84A 50%,#E89040 85%);box-shadow:0 0 32px 14px rgba(255,180,70,0.45);z-index:3;';
+    scene.appendChild(sun);
+
+    // Sea overlay cuts the bottom half of the sun (matches sea gradient)
+    const cut = document.createElement('div');
+    cut.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:44px;background:linear-gradient(180deg, #4A7488 0%, #3E5F70 35%, #2E4A58 70%, #243A46 100%);z-index:4;overflow:hidden;';
+    scene.appendChild(cut);
+
+    // Re-draw wave texture inside the cut layer so water still shows in front of sun
+    const cutWaves = document.createElement('div');
+    cutWaves.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
+    cutWaves.innerHTML =
+      '<div style="position:absolute;bottom:18px;left:0;width:200%;height:14px;overflow:hidden;animation:waveMove 4s linear infinite;"><svg width="100%" height="14" viewBox="0 0 800 14" preserveAspectRatio="none"><defs><linearGradient id="wgc1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5C8698"/><stop offset="100%" stop-color="#2E5060"/></linearGradient></defs><path d="M0,7 Q25,0 50,7 Q75,14 100,7 Q125,0 150,7 Q175,14 200,7 Q225,0 250,7 Q275,14 300,7 Q325,0 350,7 Q375,14 400,7 Q425,0 450,7 Q475,14 500,7 Q525,0 550,7 Q575,14 600,7 Q625,0 650,7 Q675,14 700,7 Q725,0 750,7 Q775,14 800,7 L800,14 L0,14 Z" fill="url(#wgc1)" opacity="0.9"/></svg></div>' +
+      '<div style="position:absolute;bottom:8px;left:0;width:200%;height:12px;overflow:hidden;animation:waveMove 7s linear infinite reverse;"><svg width="100%" height="12" viewBox="0 0 800 12" preserveAspectRatio="none"><defs><linearGradient id="wgc2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#365C6E"/><stop offset="100%" stop-color="#1A3440"/></linearGradient></defs><path d="M0,6 Q33,0 66,6 Q99,12 132,6 Q165,0 198,6 Q231,12 264,6 Q297,0 330,6 Q363,12 396,6 Q429,0 462,6 Q495,12 528,6 Q561,0 594,6 Q627,12 660,6 Q693,0 726,6 Q759,12 800,6 L800,12 L0,12 Z" fill="url(#wgc2)"/></svg></div>' +
+      '<div style="position:absolute;bottom:0;left:0;width:200%;height:9px;overflow:hidden;animation:waveMove 3s linear infinite;opacity:0.8;"><svg width="100%" height="9" viewBox="0 0 800 9" preserveAspectRatio="none"><defs><linearGradient id="wgc3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#243C48"/><stop offset="100%" stop-color="#10222A"/></linearGradient></defs><path d="M0,4 Q15,0 30,4 Q45,8 60,4 Q75,0 90,4 Q105,8 120,4 Q135,0 150,4 Q165,8 180,4 Q195,0 210,4 Q225,8 240,4 Q255,0 270,4 Q285,8 300,4 Q315,0 330,4 Q345,8 360,4 Q375,0 390,4 Q405,8 420,4 Q435,0 450,4 Q465,8 480,4 Q495,0 510,4 Q525,8 540,4 Q555,0 570,4 Q585,8 600,4 Q615,0 630,4 Q645,8 660,4 Q675,0 690,4 Q705,8 720,4 Q735,0 750,4 Q765,8 780,4 Q795,0 800,4 L800,9 L0,9 Z" fill="url(#wgc3)"/></svg></div>';
+    cut.appendChild(cutWaves);
+
+    // Shimmering sun reflection on the water
+    const reflWrap = document.createElement('div');
+    reflWrap.style.cssText = 'position:absolute;top:0;left:50%;transform:translateX(-50%);width:70px;height:44px;z-index:5;';
+    cut.appendChild(reflWrap);
+
+    // Multiple reflection bands, each shimmering independently
+    const bands = [
+      { w: 38, top: 2,  op: 0.55 },
+      { w: 30, top: 12, op: 0.42 },
+      { w: 44, top: 20, op: 0.5  },
+      { w: 22, top: 30, op: 0.35 },
+      { w: 34, top: 38, op: 0.3  },
+    ];
+    bands.forEach((b, i) => {
+      const band = document.createElement('div');
+      band.style.cssText =
+        'position:absolute;' +
+        'left:50%;' +
+        'top:' + b.top + 'px;' +
+        'width:' + b.w + 'px;' +
+        'height:4px;' +
+        'transform:translateX(-50%);' +
+        'border-radius:3px;' +
+        'background:linear-gradient(90deg, rgba(255,210,120,0) 0%, rgba(255,225,150,' + b.op + ') 50%, rgba(255,210,120,0) 100%);' +
+        'animation:reflShimmer ' + (1.6 + i * 0.35) + 's ease-in-out ' + (i * 0.22) + 's infinite;';
+      reflWrap.appendChild(band);
+    });
+
+    // A few thin sparkle streaks for extra shimmer
+    [-16, -4, 10, 20].forEach((offset, i) => {
+      const sparkle = document.createElement('div');
+      sparkle.style.cssText =
+        'position:absolute;' +
+        'bottom:' + (4 + i * 7) + 'px;' +
+        'left:calc(50% + ' + offset + 'px);' +
+        'width:3px;height:3px;border-radius:50%;' +
+        'background:rgba(255,240,200,0.9);' +
+        'box-shadow:0 0 4px 1px rgba(255,220,140,0.6);' +
+        'animation:sparkleTwinkle ' + (1.2 + i * 0.3) + 's ease-in-out ' + (i * 0.3) + 's infinite;';
+      reflWrap.appendChild(sparkle);
+    });
+  }
+
+  function buildSkyScene() {
+    const h = new Date().getHours();
+    const scene = document.getElementById('skyScene');
+    scene.innerHTML = '';
+
+    // Determine time of day
+    let period;
+    if (h >= 5 && h < 11)       period = 'morning';
+    else if (h >= 11 && h < 17) period = 'noon';
+    else if (h >= 17 && h < 20) period = 'evening';
+    else                          period = 'night';
+
+    // Set sky class
+    scene.className = 'sky-scene sky-' + period;
+
+    if (period === 'morning') {
+      // Partly cloudy sun
+      // Sun behind cloud + rainbow
+      // Sun
+      const mSun = document.createElement('div');
+      mSun.style.cssText = 'position:absolute;width:52px;height:52px;top:20px;left:52px;border-radius:50%;background:radial-gradient(circle,#FFE880 30%,#FFD040 70%,#FFC020 100%);box-shadow:0 0 18px 8px rgba(255,220,60,0.45);z-index:1;';
+      scene.appendChild(mSun);
+      // Cloud 1 – over sun, drifting
+      const mc1 = document.createElement('div');
+      mc1.style.cssText = 'position:absolute;width:80px;height:24px;top:48px;left:48px;background:rgba(240,244,250,0.95);border-radius:50px;z-index:2;animation:cloudDrift 12s linear infinite;';
+      mc1.innerHTML = '<div style="position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(240,244,250,0.95);top:-16px;left:14px;"></div><div style="position:absolute;width:24px;height:24px;border-radius:50%;background:rgba(240,244,250,0.95);top:-10px;left:42px;"></div><div style="position:absolute;width:18px;height:18px;border-radius:50%;background:rgba(240,244,250,0.95);top:-6px;left:4px;"></div>';
+      scene.appendChild(mc1);
+      // Cloud 2 – right side, slower drift
+      const mc2 = document.createElement('div');
+      mc2.style.cssText = 'position:absolute;width:52px;height:16px;top:32px;right:40px;background:rgba(240,244,250,0.85);border-radius:50px;animation:cloudDrift 18s linear infinite;animation-delay:-6s;';
+      mc2.innerHTML = '<div style="position:absolute;width:26px;height:26px;border-radius:50%;background:rgba(240,244,250,0.85);top:-12px;left:6px;"></div><div style="position:absolute;width:16px;height:16px;border-radius:50%;background:rgba(240,244,250,0.85);top:-6px;left:26px;"></div>';
+      scene.appendChild(mc2);
+      // Cloud 3 – small, fast
+      const mc3 = document.createElement('div');
+      mc3.style.cssText = 'position:absolute;width:48px;height:13px;top:70px;left:140px;background:rgba(240,244,250,0.55);border-radius:50px;animation:cloudDrift 9s linear infinite;animation-delay:-3s;';
+      mc3.innerHTML = '<div style="position:absolute;width:20px;height:20px;border-radius:50%;background:rgba(240,244,250,0.55);top:-11px;left:6px;"></div>';
+      scene.appendChild(mc3);
+    }
+
+    else if (period === 'noon') {
+      // Full sun, birds
+      // Sun
+      const nSun = document.createElement('div');
+      nSun.style.cssText = 'position:absolute;width:54px;height:54px;top:8px;right:46px;border-radius:50%;background:radial-gradient(circle,#FFE566 40%,#FFB800 100%);box-shadow:0 0 30px 12px rgba(255,200,0,0.5);';
+      scene.appendChild(nSun);
+      // Small cloud
+      const nc = document.createElement('div');
+      nc.style.cssText = 'position:absolute;width:55px;height:16px;top:65px;left:20px;background:rgba(255,255,255,0.5);border-radius:50px;';
+      nc.innerHTML = '<div style="position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.5);top:-14px;left:8px;"></div>';
+      scene.appendChild(nc);
+      // Bird group 1
+      const b1 = document.createElement('div');
+      b1.style.cssText = 'position:absolute;top:20px;left:0;animation:birdFlyLTR 14s linear infinite;';
+      b1.innerHTML = '<svg width="60" height="20" viewBox="0 0 60 20"><path d="M0,10 Q5,4 10,10" stroke="rgba(20,50,100,0.65)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M13,6 Q18,0 23,6" stroke="rgba(20,50,100,0.65)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M28,13 Q33,7 38,13" stroke="rgba(20,50,100,0.55)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
+      scene.appendChild(b1);
+      // Bird group 2 – delayed
+      const b2 = document.createElement('div');
+      b2.style.cssText = 'position:absolute;top:38px;left:0;animation:birdFlyLTR 18s linear infinite;animation-delay:-7s;';
+      b2.innerHTML = '<svg width="50" height="18" viewBox="0 0 50 18"><path d="M0,9 Q5,3 10,9" stroke="rgba(20,50,100,0.55)" stroke-width="1.7" fill="none" stroke-linecap="round"/><path d="M14,5 Q19,0 24,5" stroke="rgba(20,50,100,0.55)" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>';
+      scene.appendChild(b2);
+      // Bird group 3 – small, high
+      const b3 = document.createElement('div');
+      b3.style.cssText = 'position:absolute;top:12px;left:0;animation:birdFlyLTR 22s linear infinite;animation-delay:-12s;';
+      b3.innerHTML = '<svg width="40" height="14" viewBox="0 0 40 14"><path d="M0,7 Q4,2 8,7" stroke="rgba(20,50,100,0.45)" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M12,4 Q16,0 20,4" stroke="rgba(20,50,100,0.45)" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>';
+      scene.appendChild(b3);
+    }
+
+    else if (period === 'evening') {
+      buildEvening(scene);
+    }
+
+    else if (period === 'night') {
+      // Moon and stars
+      scene.innerHTML += `
+        <div class="sky-moon" style="display:block;width:36px;height:36px;top:14px;left:60px;"></div>`;
+      // Add stars
+      for (let i = 0; i < 18; i++) {
+        const size = Math.random() * 3 + 1.5;
+        const x = Math.random() * 85;
+        const y = Math.random() * 75;
+        const delay = Math.random() * 2;
+        scene.innerHTML += `<div class="star-dot" style="width:${size}px;height:${size}px;left:${x}%;top:${y}%;animation-delay:${delay}s;"></div>`;
+      }
+      // Crescent overlay
+      scene.innerHTML += `<div style="position:absolute;top:14px;left:72px;width:28px;height:28px;border-radius:50%;background:#1A2A48;"></div>`;
+    }
+  }
+  function previewSky(period) {
+    const scene = document.getElementById('skyScene');
+    scene.innerHTML = '';
+    scene.className = 'sky-scene sky-' + period;
+
+    if (period === 'morning') {
+      // Sun behind cloud + rainbow
+      // Sun
+      const mSun = document.createElement('div');
+      mSun.style.cssText = 'position:absolute;width:52px;height:52px;top:20px;left:52px;border-radius:50%;background:radial-gradient(circle,#FFE880 30%,#FFD040 70%,#FFC020 100%);box-shadow:0 0 18px 8px rgba(255,220,60,0.45);z-index:1;';
+      scene.appendChild(mSun);
+      // Cloud 1 – over sun, drifting
+      const mc1 = document.createElement('div');
+      mc1.style.cssText = 'position:absolute;width:80px;height:24px;top:48px;left:48px;background:rgba(240,244,250,0.95);border-radius:50px;z-index:2;animation:cloudDrift 12s linear infinite;';
+      mc1.innerHTML = '<div style="position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(240,244,250,0.95);top:-16px;left:14px;"></div><div style="position:absolute;width:24px;height:24px;border-radius:50%;background:rgba(240,244,250,0.95);top:-10px;left:42px;"></div><div style="position:absolute;width:18px;height:18px;border-radius:50%;background:rgba(240,244,250,0.95);top:-6px;left:4px;"></div>';
+      scene.appendChild(mc1);
+      // Cloud 2 – right side, slower drift
+      const mc2 = document.createElement('div');
+      mc2.style.cssText = 'position:absolute;width:52px;height:16px;top:32px;right:40px;background:rgba(240,244,250,0.85);border-radius:50px;animation:cloudDrift 18s linear infinite;animation-delay:-6s;';
+      mc2.innerHTML = '<div style="position:absolute;width:26px;height:26px;border-radius:50%;background:rgba(240,244,250,0.85);top:-12px;left:6px;"></div><div style="position:absolute;width:16px;height:16px;border-radius:50%;background:rgba(240,244,250,0.85);top:-6px;left:26px;"></div>';
+      scene.appendChild(mc2);
+      // Cloud 3 – small, fast
+      const mc3 = document.createElement('div');
+      mc3.style.cssText = 'position:absolute;width:48px;height:13px;top:70px;left:140px;background:rgba(240,244,250,0.55);border-radius:50px;animation:cloudDrift 9s linear infinite;animation-delay:-3s;';
+      mc3.innerHTML = '<div style="position:absolute;width:20px;height:20px;border-radius:50%;background:rgba(240,244,250,0.55);top:-11px;left:6px;"></div>';
+      scene.appendChild(mc3);
+    }
+    else if (period === 'noon') {
+      // Sun
+      const nSun = document.createElement('div');
+      nSun.style.cssText = 'position:absolute;width:54px;height:54px;top:8px;right:46px;border-radius:50%;background:radial-gradient(circle,#FFE566 40%,#FFB800 100%);box-shadow:0 0 30px 12px rgba(255,200,0,0.5);';
+      scene.appendChild(nSun);
+      // Small cloud
+      const nc = document.createElement('div');
+      nc.style.cssText = 'position:absolute;width:55px;height:16px;top:65px;left:20px;background:rgba(255,255,255,0.5);border-radius:50px;';
+      nc.innerHTML = '<div style="position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.5);top:-14px;left:8px;"></div>';
+      scene.appendChild(nc);
+      // Bird group 1
+      const b1 = document.createElement('div');
+      b1.style.cssText = 'position:absolute;top:20px;left:0;animation:birdFlyLTR 14s linear infinite;';
+      b1.innerHTML = '<svg width="60" height="20" viewBox="0 0 60 20"><path d="M0,10 Q5,4 10,10" stroke="rgba(20,50,100,0.65)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M13,6 Q18,0 23,6" stroke="rgba(20,50,100,0.65)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M28,13 Q33,7 38,13" stroke="rgba(20,50,100,0.55)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
+      scene.appendChild(b1);
+      // Bird group 2 – delayed
+      const b2 = document.createElement('div');
+      b2.style.cssText = 'position:absolute;top:38px;left:0;animation:birdFlyLTR 18s linear infinite;animation-delay:-7s;';
+      b2.innerHTML = '<svg width="50" height="18" viewBox="0 0 50 18"><path d="M0,9 Q5,3 10,9" stroke="rgba(20,50,100,0.55)" stroke-width="1.7" fill="none" stroke-linecap="round"/><path d="M14,5 Q19,0 24,5" stroke="rgba(20,50,100,0.55)" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>';
+      scene.appendChild(b2);
+      // Bird group 3 – small, high
+      const b3 = document.createElement('div');
+      b3.style.cssText = 'position:absolute;top:12px;left:0;animation:birdFlyLTR 22s linear infinite;animation-delay:-12s;';
+      b3.innerHTML = '<svg width="40" height="14" viewBox="0 0 40 14"><path d="M0,7 Q4,2 8,7" stroke="rgba(20,50,100,0.45)" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M12,4 Q16,0 20,4" stroke="rgba(20,50,100,0.45)" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>';
+      scene.appendChild(b3);
+    }
+    else if (period === 'evening') {
+      buildEvening(scene);
+    }
+    else if (period === 'night') {
+      scene.innerHTML += `<div class="sky-moon" style="display:block;width:36px;height:36px;top:14px;left:60px;"></div>`;
+      for (let i = 0; i < 18; i++) {
+        const size = Math.random() * 3 + 1.5;
+        const x = Math.random() * 85;
+        const y = Math.random() * 75;
+        const delay = Math.random() * 2;
+        scene.innerHTML += `<div class="star-dot" style="width:${size}px;height:${size}px;left:${x}%;top:${y}%;animation-delay:${delay}s;"></div>`;
+      }
+      scene.innerHTML += `<div style="position:absolute;top:14px;left:72px;width:28px;height:28px;border-radius:50%;background:#1A2A48;"></div>`;
+    }
+  }
+
+  buildSkyScene();
+  setInterval(buildSkyScene, 300000); // refresh every 5 min
+
+  /* ---- TOP EMOJI BY TIME & WEATHER ---- */
+
+
+  /* ---- CONFETTI ---- */
+  function launchConfetti() {
+    const canvas = document.getElementById('confettiCanvas');
+    canvas.style.display = 'block';
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#7EC8E3','#A8D8EA','#B8E0F7','#5BB8D4','#3AAED8','#E0F4FF','#BDE0FE'];
+    const pieces = Array.from({length: 80}, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * -canvas.height,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      speed: Math.random() * 3 + 2,
+      spin: Math.random() * 6 - 3,
+    }));
+
+    let frame;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+        p.y += p.speed;
+        p.rot += p.spin;
+      });
+      if (pieces.some(p => p.y < canvas.height)) {
+        frame = requestAnimationFrame(draw);
+      } else {
+        canvas.style.display = 'none';
+      }
+    };
+    draw();
+    setTimeout(() => {
+      cancelAnimationFrame(frame);
+      canvas.style.display = 'none';
+    }, 2000);
+  }
+
+  /* ---- COMIC MAGNIFIER ---- */
+  function showComicBubble(text) {
+    const bubble = document.getElementById('comicBubble');
+    document.getElementById('comicText').textContent = text || 'בואי נסתכל על זה מקרוב 🔍';
+    bubble.style.display = 'block';
+  }
+  function hideComicBubble() {
+    document.getElementById('comicBubble').style.display = 'none';
+  }
+
+  /* ---- SUMMARY RESULT HANDLER ---- */
+  function handleSummaryResult(text, modalId) {
+    // Simple heuristic until Nutri is connected:
+    // Look for positive/negative keywords
+    const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','ממשיכה','יפה','חיובי','הצלחה'];
+    const negativeWords = ['לשים לב','כדאי להיזהר','החמרה','בעייתי','מומלץ לשפר','חסר','לא מספיק'];
+    const isPositive = positiveWords.some(w => text.includes(w));
+    const isNegative = negativeWords.some(w => text.includes(w));
+    if (isPositive && !isNegative) {
+      setTimeout(() => launchConfetti(), 300);
+    } else if (isNegative) {
+      setTimeout(() => showComicBubble('בואי נסתכל על זה מקרוב ונשפר יחד 🔍'), 500);
+    }
+  }
+
   function rewave(el) {
     el.classList.remove('waving');
-    void el.offsetWidth;
+    el.offsetHeight; // force reflow to restart animation reliably
     el.classList.add('waving');
-    setTimeout(() => el.classList.remove('waving'), 2600);
+    setTimeout(() => el.classList.remove('waving'), 4000);
   }
+  // Trigger wave once on initial load (replaces old CSS autoplay)
+  window.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+      const handEl = document.querySelector('.wave-emoji');
+      if (handEl) rewave(handEl);
+    }, 400);
+  });
+
+  // Global: wave the hand emoji on ANY interaction with the site
+  let waveThrottle = false;
+  function triggerGlobalWave() {
+    if (waveThrottle) return;
+    waveThrottle = true;
+    const handEl = document.querySelector('.wave-emoji');
+    if (handEl) rewave(handEl);
+    setTimeout(() => { waveThrottle = false; }, 4000);
+  }
+  document.addEventListener('click', function(e) {
+    // Avoid double-triggering when clicking the hand itself (rewave already called via onclick)
+    if (e.target.closest('.wave-emoji')) return;
+    // Only react to actual interactive elements
+    if (e.target.closest('button, .meal-card, .item-card, .nav-item, .opt-btn, .add-btn, .btn-interim, .btn-final, input, [onclick]')) {
+      triggerGlobalWave();
+    }
+  });
 
   function popBtn(el) {
     el.classList.remove('popped');
@@ -1225,7 +1836,7 @@ body {
 
 <!-- MODAL: BLOOD TESTS -->
 <div class="modal-overlay" id="bloodModal">
-  <div class="modal" style="max-height:90vh;">
+  <div class="modal animating" style="max-height:90vh;">
     <div class="modal-handle"></div>
     <h3>🩸 בדיקות דם</h3>
     <div id="bloodContent" style="overflow-y:auto;max-height:70vh;"></div>
@@ -1326,7 +1937,7 @@ body {
 
 <!-- MODAL: MONTHLY -->
 <div class="modal-overlay" id="monthlyModal">
-  <div class="modal" style="max-height:85vh;">
+  <div class="modal animating" style="max-height:85vh;">
     <div class="modal-handle"></div>
     <h3>📊 סיכום חודשי</h3>
     <div id="monthlyContent" style="overflow-y:auto;max-height:65vh;"></div>
@@ -1336,7 +1947,7 @@ body {
 
 <!-- MODAL: WEEKLY -->
 <div class="modal-overlay" id="weeklyModal">
-  <div class="modal" style="max-height:85vh;">
+  <div class="modal animating" style="max-height:85vh;">
     <div class="modal-handle"></div>
     <h3>📅 סיכום שבועי</h3>
     <div id="weeklyContent" style="overflow-y:auto;max-height:65vh;"></div>
@@ -1346,7 +1957,7 @@ body {
 
 <!-- MODAL: HISTORY -->
 <div class="modal-overlay" id="historyModal">
-  <div class="modal" style="max-height:85vh;">
+  <div class="modal animating" style="max-height:85vh;">
     <div class="modal-handle"></div>
     <h3>📖 היסטוריה</h3>
     <div id="historyContent" style="overflow-y:auto;max-height:60vh;"></div>
