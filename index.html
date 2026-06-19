@@ -451,65 +451,6 @@ body {
   display: none;
 }
 
-/* ===================== */
-/* COMIC MAGNIFIER       */
-/* ===================== */
-.comic-bubble {
-  display: none;
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9998;
-  text-align: center;
-  animation: bubblePop 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes bubblePop {
-  0%   { transform: translateX(-50%) scale(0.5); opacity: 0; }
-  70%  { transform: translateX(-50%) scale(1.1); opacity: 1; }
-  100% { transform: translateX(-50%) scale(1); opacity: 1; }
-}
-.comic-bubble .bubble-body {
-  background: white;
-  border: 3px solid var(--text);
-  border-radius: 20px;
-  padding: 16px 20px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  position: relative;
-  box-shadow: 4px 4px 0px var(--text);
-  max-width: 260px;
-}
-.comic-bubble .bubble-body::after {
-  content: '';
-  position: absolute;
-  bottom: -18px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 10px solid transparent;
-  border-top-color: var(--text);
-}
-.comic-bubble .bubble-body::before {
-  content: '';
-  position: absolute;
-  bottom: -13px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 9px solid transparent;
-  border-top-color: white;
-  z-index: 1;
-}
-.comic-bubble .magnifier {
-  font-size: 48px;
-  display: block;
-  margin-top: 8px;
-  animation: magnifierWiggle 1s ease-in-out infinite;
-}
-@keyframes magnifierWiggle {
-  0%, 100% { transform: rotate(-10deg); }
-  50%       { transform: rotate(10deg); }
-}
 
 /* ===================== */
 /* SKY SCENE             */
@@ -710,12 +651,6 @@ body {
 <div class="bottom-spacer"></div>
 
 <canvas id="confettiCanvas"></canvas>
-<div class="comic-bubble" id="comicBubble">
-  <div class="bubble-body">
-    <span id="comicText">בואי נסתכל על זה מקרוב 🔍</span>
-    <span class="magnifier">🔍</span>
-  </div>
-</div>
 
 <div class="bottom-nav">
   <div class="nav-item active" onclick="tapNav(this)">
@@ -815,7 +750,7 @@ body {
     <div class="modal-handle"></div>
     <h3>☀️ סיכום ביניים</h3>
     <div class="summary-content" id="interimContent"></div>
-    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('interimModal'); hideComicBubble()">סגירה</button>
+    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('interimModal')">סגירה</button>
   </div>
 </div>
 
@@ -825,7 +760,7 @@ body {
     <div class="modal-handle"></div>
     <h3>🌙 סיכום יומי סופי</h3>
     <div class="summary-content" id="finalContent"></div>
-    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('finalModal'); hideComicBubble()">סגירה</button>
+    <button class="modal-save" style="margin-top:20px;" onclick="closeModal('finalModal')">סגירה</button>
   </div>
 </div>
 
@@ -1781,29 +1716,11 @@ body {
     }, 2000);
   }
 
-  /* ---- COMIC MAGNIFIER ---- */
-  function showComicBubble(text) {
-    const bubble = document.getElementById('comicBubble');
-    document.getElementById('comicText').textContent = text || 'בואי נסתכל על זה מקרוב 🔍';
-    bubble.style.display = 'block';
-  }
-  function hideComicBubble() {
-    document.getElementById('comicBubble').style.display = 'none';
-  }
-
   /* ---- SUMMARY RESULT HANDLER ---- */
-  function handleSummaryResult(text, modalId) {
-    // Simple heuristic until Nutri is connected:
-    // Look for positive/negative keywords
-    const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','ממשיכה','יפה','חיובי','הצלחה'];
-    const negativeWords = ['לשים לב','כדאי להיזהר','החמרה','בעייתי','מומלץ לשפר','חסר','לא מספיק'];
+  function handleSummaryResult(text) {
+    const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','יפה','חיובי','הצלחה'];
     const isPositive = positiveWords.some(w => text.includes(w));
-    const isNegative = negativeWords.some(w => text.includes(w));
-    if (isPositive && !isNegative) {
-      setTimeout(() => launchConfetti(), 300);
-    } else if (isNegative) {
-      setTimeout(() => showComicBubble('בואי נסתכל על זה מקרוב ונשפר יחד 🔍'), 500);
-    }
+    if (isPositive) setTimeout(() => launchConfetti(), 300);
   }
 
   function rewave(el) {
@@ -2006,7 +1923,7 @@ body {
     callNutri(userMsg, contentEl).then(text => {
       if (text) {
         saveFeedbackToHistory('interim', text);
-        handleSummaryResult(text, 'interimModal');
+        handleSummaryResult(text);
       }
     });
   }
@@ -2024,7 +1941,7 @@ body {
     callNutri(userMsg, contentEl).then(text => {
       if (text) {
         saveFeedbackToHistory('final', text);
-        handleSummaryResult(text, 'finalModal');
+        handleSummaryResult(text);
       }
     });
   }
