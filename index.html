@@ -959,6 +959,7 @@ body {
   let activities = JSON.parse(localStorage.getItem('nutri_activities') || '[]');
   let selQty = '', selIntensity = '';
   let editMealIdx = -1, editActivityIdx = -1;
+  let mealImageData = null;
 
   // Save helpers
   function saveMealsToStorage() {
@@ -1031,14 +1032,40 @@ body {
     document.getElementById('uploadName').textContent = '';
     document.getElementById('qtySection').style.display = 'none';
     selQty = '';
+    mealImageData = null;
+    const prevImg = document.getElementById('mealImagePreview');
+    if (prevImg) prevImg.remove();
+    if (editMealIdx >= 0 && meals[editMealIdx].image) {
+      mealImageData = meals[editMealIdx].image;
+      const img = document.createElement('img');
+      img.id = 'mealImagePreview';
+      img.style.cssText = 'width:100%;border-radius:10px;margin-top:8px;object-fit:contain;max-height:160px;';
+      img.src = mealImageData;
+      document.getElementById('uploadName').after(img);
+      document.getElementById('uploadName').textContent = '✅ תמונה קיימת';
+    }
     document.querySelectorAll('#mealModal .opt-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById('mealModal').classList.add('open');
   }
 
   function handleUpload(input) {
     if (input.files && input.files[0]) {
-      document.getElementById('uploadName').textContent = '✅ ' + input.files[0].name;
+      const file = input.files[0];
+      document.getElementById('uploadName').textContent = '✅ ' + file.name;
       document.getElementById('qtySection').style.display = 'block';
+      const reader = new FileReader();
+      reader.onload = e => {
+        mealImageData = e.target.result;
+        let prev = document.getElementById('mealImagePreview');
+        if (!prev) {
+          prev = document.createElement('img');
+          prev.id = 'mealImagePreview';
+          prev.style.cssText = 'width:100%;border-radius:10px;margin-top:8px;object-fit:contain;max-height:160px;';
+          document.getElementById('uploadName').after(prev);
+        }
+        prev.src = mealImageData;
+      };
+      reader.readAsDataURL(file);
     }
   }
 
@@ -1051,9 +1078,9 @@ body {
     let desc = text;
     if (uploaded) desc += (desc ? ' + ' : '') + `מוצר סרוק${selQty ? ' (' + selQty + ')' : ''}`;
     if (editMealIdx >= 0) {
-      meals[editMealIdx] = { time, desc };
+      meals[editMealIdx] = { time, desc, image: mealImageData || meals[editMealIdx].image || null };
     } else {
-      meals.push({ time, desc });
+      meals.push({ time, desc, image: mealImageData || null });
     }
     editMealIdx = -1;
     meals.sort((a,b) => a.time.localeCompare(b.time));
@@ -1076,12 +1103,28 @@ body {
     document.getElementById('mealsList').innerHTML = meals.map((m, i) => `
       <div class="item-card${animate && i === meals.length-1 ? ' new' : ''}">
         <div class="item-time">${m.time}</div>
-        <div class="item-info"><div class="item-name">${m.desc}</div></div>
+        <div class="item-info">
+          <div class="item-name">${m.desc}</div>
+          ${m.image ? `<img src="${m.image}" style="width:100%;border-radius:8px;margin-top:6px;max-height:120px;object-fit:contain;" onclick="openMealImage('${i}')">` : ''}
+        </div>
         <div class="item-actions">
           <button class="action-btn edit-btn" onclick="openMealModal(${i})" title="עריכה">✏️</button>
           <button class="action-btn delete-btn" onclick="deleteMeal(${i})" title="מחיקה">🗑️</button>
         </div>
       </div>`).join('');
+  }
+
+  function openMealImage(idx) {
+    const m = meals[parseInt(idx)];
+    if (!m || !m.image) return;
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    ov.onclick = () => ov.remove();
+    const img = document.createElement('img');
+    img.src = m.image;
+    img.style.cssText = 'max-width:92vw;max-height:88vh;border-radius:12px;object-fit:contain;';
+    ov.appendChild(img);
+    document.body.appendChild(ov);
   }
 
   // ACTIVITY
@@ -1698,11 +1741,12 @@ body {
     scene.innerHTML = '';
 
     // Determine time of day
+    const mins = h * 60 + new Date().getMinutes();
     let period;
-    if (h >= 5 && h < 11)       period = 'morning';
-    else if (h >= 11 && h < 17) period = 'noon';
-    else if (h >= 17 && h < 20) period = 'evening';
-    else                          period = 'night';
+    if (mins >= 300 && mins <= 780)       period = 'morning';  // 05:00–13:00
+    else if (mins > 780 && mins <= 990)   period = 'noon';     // 13:01–16:30
+    else if (mins > 990 && mins <= 1230)  period = 'evening';  // 16:31–20:30
+    else                                   period = 'night';    // 20:31–04:59
 
     // Set sky class
     scene.className = 'sky-scene sky-' + period;
@@ -1913,20 +1957,17 @@ body {
 
   function triggerHomeAnimations() {
     const cards = Array.from(document.querySelectorAll('.strip-card'));
-    function bounceRandom(maxDelay) {
+    function bounceAll() {
       cards.forEach(card => {
-        const delay = Math.floor(Math.random() * maxDelay);
-        setTimeout(() => {
-          card.classList.remove('wave-up');
-          void card.offsetWidth;
-          card.classList.add('wave-up');
-          setTimeout(() => card.classList.remove('wave-up'), 900);
-        }, delay);
+        card.classList.remove('wave-up');
+        void card.offsetWidth;
+        card.classList.add('wave-up');
+        setTimeout(() => card.classList.remove('wave-up'), 900);
       });
     }
-    bounceRandom(400);          // round 1: 0–400ms
-    setTimeout(() => bounceRandom(400), 1300); // round 2: 1300–1700ms
-    setTimeout(() => bounceRandom(400), 2400); // round 3: 2400–2800ms (ends ~3s)
+    bounceAll();
+    setTimeout(() => bounceAll(), 1300);
+    setTimeout(() => bounceAll(), 2400);
 
     const handEl = document.querySelector('.wave-emoji');
     if (handEl) rewave(handEl);
