@@ -1908,19 +1908,15 @@ body {
 
   function triggerHomeAnimations() {
     const cards = Array.from(document.querySelectorAll('.strip-card'));
-    const waveDelay = 150;
-    function waveCard(card, delay) {
+    cards.forEach(card => {
+      const delay = Math.floor(Math.random() * 500);
       setTimeout(() => {
         card.classList.remove('wave-up');
         void card.offsetWidth;
         card.classList.add('wave-up');
         setTimeout(() => card.classList.remove('wave-up'), 650);
       }, delay);
-    }
-    // RTL: index 0 = rightmost → wave right-to-left
-    cards.forEach((c, i) => waveCard(c, i * waveDelay));
-    // then left-to-right (reverse)
-    [...cards].reverse().forEach((c, i) => waveCard(c, cards.length * waveDelay + 320 + i * waveDelay));
+    });
 
     const handEl = document.querySelector('.wave-emoji');
     if (handEl) rewave(handEl);
