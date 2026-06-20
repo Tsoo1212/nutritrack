@@ -909,7 +909,24 @@ body {
 ═══ שימוש בבדיקות דם ═══
 - בדיקות הדם הן רקע אישי לכיוון ההמלצות – אין לציין את הערכים המספריים בסיכומים השוטפים
 - כשמוזנות בדיקות דם חדשות, הן מהוות נקודת ייחוס לכיול ההמלצות לגבי סוכר ושאר הפרמטרים
-- לציין ערכים מספריים רק אם המשתמשת שואלת ישירות על תוצאות הבדיקות`;
+- לציין ערכים מספריים רק אם המשתמשת שואלת ישירות על תוצאות הבדיקות
+
+═══ דגל אדום גליקמי – חובה מוחלטת ═══
+צוף נמצאת בטרום-סוכרת עם גלוקוז ו-HbA1C בגבול – כל חריגה גליקמית היא אירוע רפואי ממשי.
+כשמוזן מזון עם עומס סוכר גבוה (ממתקים, עוגות, מיצים, לחם לבן בכמות, חטיפים מתוקים, פחמימות מזוקקות):
+- אל תמתן, אל תנחם, אל תאשר – זה לא "בסדר לפעמים" במקרה שלה
+- פתח עם הצהרה ברורה: "הארוחה הזו מכניסה כמות סוכר שמסכנת ישירות את הגלוקוז שלך"
+- הסבר מה קורה בגוף עכשיו (ספייק, עומס על הלבלב, השפעה על כבד שומני)
+- תן הנחיה מיידית אחת: תנועה, שתייה, מה לאכול עכשיו לאיזון
+- בסיכום יומי שבו היו ארוחות בעייתיות – אל תסיים במשפט מעודד שמרכך את הבעיה
+
+═══ הערכת סנטימנט – חובה ═══
+בסוף כל סיכום ביניים ויומי, הוסף בשורה נפרדת כסיום מוחלט של התגובה:
+[TREND:חיובי] – אם ארוחות היום היו ברמה מקובלת מבחינת סוכר וגליקמיה
+[TREND:שלילי] – אם הוזן מזון עם עומס גליקמי גבוה, סוכר עודף, מזון מעובד, או שהיום היה בעייתי תזונתית
+כלל ברזל לטרום-סוכרת: כל ארוחה עם ממתקים / מיצים / עוגה / לחם לבן בכמות גדולה / חטיפים מתוקים → [TREND:שלילי] ללא יוצא מן הכלל.
+שורה זו חייבת להיות השורה האחרונה בתגובה, ללא שום טקסט אחריה.`;
+
 
   // Load from localStorage
   let meals = JSON.parse(localStorage.getItem('nutri_meals') || '[]');
@@ -1871,18 +1888,21 @@ body {
     });
   }
 
-  function handleSummaryResult(text) {
-    const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','יפה','חיובי','הצלחה','ממש טוב','בסדר גמור','מצוין','ארוחה מאוזנת','בחירה טובה','בחירה חכמה','איזון טוב'];
-    const negativeWords = ['בעייתי','סוכר גבוה','גליקמי גבוה','חשש','עלייה מהירה','ספייק','עודף סוכר','ארוחה שמנה','מנה כבדה','קפיצה חדה','בחירה לא טובה','ארוחה כבדה'];
-    const isPositive = positiveWords.some(w => text.includes(w));
-    const isNegative = !isPositive && negativeWords.some(w => text.includes(w));
-    lastSummaryText = text;
-    if (isPositive) {
-      lastTrend = 'up';
-      setTimeout(() => launchConfetti(false), 300);
-    } else if (isNegative) {
-      lastTrend = 'down';
-      setTimeout(() => launchConfetti(true), 300);
+  function handleSummaryResult(rawText, contentEl) {
+    const trendMatch = rawText.match(/\[TREND:(חיובי|שלילי)\]/);
+    const cleanText = rawText.replace(/\n?\[TREND:(?:חיובי|שלילי)\]\n?/g, '').trimEnd();
+    lastSummaryText = cleanText;
+    if (contentEl) {
+      contentEl.innerHTML = `<div class="ai-response">${marked.parse(cleanText)}</div>`;
+    }
+    if (trendMatch) {
+      if (trendMatch[1] === 'חיובי') {
+        lastTrend = 'up';
+        setTimeout(() => launchConfetti(false), 300);
+      } else {
+        lastTrend = 'down';
+        setTimeout(() => launchConfetti(true), 300);
+      }
     }
   }
 
@@ -2177,8 +2197,8 @@ body {
     const userMsg = `סיכום ביניים – אמצע היום.\n\n${formatDayForAI()}\n\nאנא תני לי המלצות ספציפיות להמשך היום – מה לאכול, מה להימנע, ואם כדאי להוסיף פעילות.`;
     callNutri(userMsg, contentEl).then(text => {
       if (text) {
-        saveFeedbackToHistory('interim', text);
-        handleSummaryResult(text);
+        handleSummaryResult(text, contentEl);
+        saveFeedbackToHistory('interim', lastSummaryText);
       }
     });
   }
@@ -2195,8 +2215,8 @@ body {
     const userMsg = `סיכום יומי סופי – סוף היום.\n\n${formatDayForAI()}\n\nאנא תני לי סיכום מלא של היום – מה היה טוב, מה פחות, ומה כדאי לשפר מחר.`;
     callNutri(userMsg, contentEl).then(text => {
       if (text) {
-        saveFeedbackToHistory('final', text);
-        handleSummaryResult(text);
+        handleSummaryResult(text, contentEl);
+        saveFeedbackToHistory('final', lastSummaryText);
       }
     });
   }
