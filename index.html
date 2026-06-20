@@ -684,11 +684,11 @@ body {
 </div>
 
 <div class="day-strip">
-  <div class="strip-card" style="cursor:pointer;" onclick="bounceCard(this)">
+  <div class="strip-card" style="cursor:pointer;" onclick="bounceCard(this); openCardSummary('meals')">
     <div class="num" id="mealCount">0</div>
     <div class="lbl">ארוחות</div>
   </div>
-  <div class="strip-card" style="cursor:pointer;" onclick="bounceCard(this)">
+  <div class="strip-card" style="cursor:pointer;" onclick="bounceCard(this); openCardSummary('act')">
     <div class="num" id="actCount">0</div>
     <div class="lbl">פעילות</div>
   </div>
@@ -743,7 +743,7 @@ body {
     <div class="nav-label">חודשי</div>
   </div>
   <div class="nav-item" onclick="tapNav(this); openBloodTests()">
-    <div class="nav-icon">🩸</div>
+    <div class="nav-icon">🩺</div>
     <div class="nav-label">בדיקות דם</div>
   </div>
   <div class="nav-item" onclick="tapNav(this); openHistory()">
@@ -2019,6 +2019,21 @@ body {
     setTimeout(() => el.classList.remove('bouncing'), 2000);
   }
 
+  function openCardSummary(type) {
+    if (type === 'meals') {
+      if (!meals.length) return;
+      document.getElementById('trendModalTitle').textContent = '🍽️ ארוחות היום';
+      document.getElementById('trendModalContent').innerHTML =
+        `<div class="ai-response">${meals.map(m => `<div style="display:flex;gap:10px;align-items:baseline;margin-bottom:8px;"><span style="font-weight:600;color:var(--peach-dark);min-width:42px;">${m.time}</span><span>${m.desc}</span></div>`).join('')}</div>`;
+    } else {
+      if (!activities.length) return;
+      document.getElementById('trendModalTitle').textContent = '🏃‍♀️ פעילות גופנית היום';
+      document.getElementById('trendModalContent').innerHTML =
+        `<div class="ai-response">${activities.map(a => `<div style="display:flex;gap:10px;align-items:baseline;margin-bottom:8px;"><span style="font-weight:600;color:var(--peach-dark);min-width:42px;">${a.time||''}</span><span>${a.type} – ${a.duration} דק׳ (${a.intensity})</span></div>`).join('')}</div>`;
+    }
+    document.getElementById('trendModal').classList.add('open');
+  }
+
   function openTrendExplanation(type) {
     const content = type === 'sugar' ? lastSugarCard : lastCholCard;
     if (!content) return;
@@ -2343,7 +2358,7 @@ body {
 <div class="modal-overlay" id="bloodModal">
   <div class="modal animating" style="max-height:90vh;">
     <div class="modal-handle"></div>
-    <h3>🩸 בדיקות דם</h3>
+    <h3>🩺 בדיקות דם</h3>
     <div id="bloodContent" style="overflow-y:auto;max-height:70vh;"></div>
     <button class="modal-save" style="margin-top:16px;" onclick="closeModal('bloodModal')">סגירה</button>
   </div>
