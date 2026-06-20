@@ -160,12 +160,14 @@ body {
   cursor: pointer;
   font-size: 15px;
   padding: 3px 5px;
-  border-radius: 8px;
   line-height: 1;
   transition: background 0.15s;
-  opacity: 0.6;
+  opacity: 0.65;
 }
-.action-btn:hover { background: var(--cream); opacity: 1; }
+.action-btn.edit-btn   { border-radius: 8px 8px 0 0; border-bottom: 1.5px solid #ede0d4; }
+.action-btn.delete-btn { border-radius: 0 0 8px 8px; }
+.action-btn.edit-btn:hover   { background: #eef2ff; opacity: 1; }
+.action-btn.delete-btn:hover { background: #fff0f0; opacity: 1; }
 
 /* ADD BUTTON */
 .add-btn {
@@ -374,7 +376,7 @@ body {
   transform-origin: 70% 80%;
 }
 .wave-emoji.waving {
-  animation: wave 4s ease-in-out;
+  animation: wave 3s ease-in-out;
 }
 
 /* NAV TAP ANIMATION */
@@ -455,7 +457,8 @@ body {
   75%     { transform: translateY(0); }
   87%     { transform: translateY(-2px); }
 }
-.strip-card.bouncing { animation: cardBounce 2s ease; }
+.strip-card.bouncing      { animation: cardBounce 2s ease; }
+.strip-card.bouncing-home { animation: cardBounce 3s ease; }
 
 /* STRIP CARD POP on update */
 @keyframes cardPop {
@@ -964,6 +967,7 @@ body {
   if (storedDay !== todayKey) {
     meals = [];
     activities = [];
+    localStorage.removeItem('nutri_trend');
     localStorage.setItem('nutri_day', todayKey);
     saveMealsToStorage();
     saveActivitiesToStorage();
@@ -980,8 +984,8 @@ body {
 
   function closeModal(id) {
     document.getElementById(id).classList.remove('open');
-    if ((id === 'interimModal' || id === 'finalModal') && lastTrend) {
-      setTimeout(() => setTrendCards(lastTrend), 200);
+    if (id === 'interimModal' || id === 'finalModal') {
+      setTimeout(() => triggerHomeAnimations(), 200);
     }
   }
 
@@ -1059,8 +1063,8 @@ body {
         <div class="item-time">${m.time}</div>
         <div class="item-info"><div class="item-name">${m.desc}</div></div>
         <div class="item-actions">
-          <button class="action-btn" onclick="openMealModal(${i})" title="עריכה">✏️</button>
-          <button class="action-btn" onclick="deleteMeal(${i})" title="מחיקה">🗑️</button>
+          <button class="action-btn edit-btn" onclick="openMealModal(${i})" title="עריכה">✏️</button>
+          <button class="action-btn delete-btn" onclick="deleteMeal(${i})" title="מחיקה">🗑️</button>
         </div>
       </div>`).join('');
   }
@@ -1125,8 +1129,8 @@ body {
           <div class="item-tags"><span class="tag">${a.intensity}</span></div>
         </div>
         <div class="item-actions">
-          <button class="action-btn" onclick="openActivityModal(${i})" title="עריכה">✏️</button>
-          <button class="action-btn" onclick="deleteActivity(${i})" title="מחיקה">🗑️</button>
+          <button class="action-btn edit-btn" onclick="openActivityModal(${i})" title="עריכה">✏️</button>
+          <button class="action-btn delete-btn" onclick="deleteActivity(${i})" title="מחיקה">🗑️</button>
         </div>
       </div>`).join('');
   }
@@ -1886,6 +1890,24 @@ body {
   let lastSugarCard = '';
   let lastCholCard = '';
 
+  function saveTrendToStorage() {
+    localStorage.setItem('nutri_trend', JSON.stringify({
+      date: todayKey, trend: lastTrend, sugar: lastSugarCard, chol: lastCholCard
+    }));
+  }
+
+  function triggerHomeAnimations() {
+    document.querySelectorAll('.strip-card').forEach(card => {
+      card.classList.remove('bouncing', 'bouncing-home');
+      void card.offsetWidth;
+      card.classList.add('bouncing-home');
+      setTimeout(() => card.classList.remove('bouncing-home'), 3000);
+    });
+    const handEl = document.querySelector('.wave-emoji');
+    if (handEl) rewave(handEl);
+    if (lastTrend) setTimeout(() => setTrendCards(lastTrend), 150);
+  }
+
   function setTrendCards(direction) {
     ['sugarCard', 'cholCard'].forEach(cardId => {
       const card = document.getElementById(cardId);
@@ -1920,6 +1942,7 @@ body {
         lastTrend = 'down';
         setTimeout(() => launchConfetti(true), 300);
       }
+      saveTrendToStorage();
     }
   }
 
@@ -1948,14 +1971,17 @@ body {
     el.classList.remove('waving');
     el.offsetHeight; // force reflow to restart animation reliably
     el.classList.add('waving');
-    setTimeout(() => el.classList.remove('waving'), 4000);
+    setTimeout(() => el.classList.remove('waving'), 3000);
   }
-  // Trigger wave once on initial load (replaces old CSS autoplay)
+  // Restore trend arrows and trigger home animations on load
   window.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-      const handEl = document.querySelector('.wave-emoji');
-      if (handEl) rewave(handEl);
-    }, 400);
+    const savedTrend = JSON.parse(localStorage.getItem('nutri_trend') || 'null');
+    if (savedTrend && savedTrend.date === todayKey && savedTrend.trend) {
+      lastTrend    = savedTrend.trend;
+      lastSugarCard = savedTrend.sugar || '';
+      lastCholCard  = savedTrend.chol  || '';
+    }
+    setTimeout(() => triggerHomeAnimations(), 400);
   });
 
   // Global: wave the hand emoji on ANY interaction with the site
@@ -1965,7 +1991,7 @@ body {
     waveThrottle = true;
     const handEl = document.querySelector('.wave-emoji');
     if (handEl) rewave(handEl);
-    setTimeout(() => { waveThrottle = false; }, 4000);
+    setTimeout(() => { waveThrottle = false; }, 3000);
   }
   document.addEventListener('click', function(e) {
     // Avoid double-triggering when clicking the hand itself (rewave already called via onclick)
@@ -1999,9 +2025,12 @@ body {
 
   function tapNav(el) {
     el.classList.remove('tapped');
-    void el.offsetWidth; // reflow to restart animation
+    void el.offsetWidth;
     el.classList.add('tapped');
     setTimeout(() => el.classList.remove('tapped'), 350);
+    if (el.querySelector('.nav-icon')?.textContent === '🏠') {
+      setTimeout(() => triggerHomeAnimations(), 100);
+    }
   }
 
   /* ---- SETTINGS ---- */
