@@ -713,19 +713,19 @@ body {
 </div>
 
 <div class="day-strip">
-  <div class="strip-card" style="cursor:pointer;" onclick="openCardSummary('meals')">
+  <div class="strip-card" style="cursor:pointer;" onclick="bounceCard(this); openCardSummary('meals')">
     <div class="num" id="mealCount">0</div>
     <div class="lbl">ארוחות</div>
   </div>
-  <div class="strip-card" style="cursor:pointer;" onclick="openCardSummary('act')">
+  <div class="strip-card" style="cursor:pointer;" onclick="bounceCard(this); openCardSummary('act')">
     <div class="num" id="actCount">0</div>
     <div class="lbl">פעילות</div>
   </div>
-  <div class="strip-card empty" id="sugarCard" style="cursor:pointer;" onclick="openTrendExplanation('sugar')">
+  <div class="strip-card empty" id="sugarCard" style="cursor:pointer;" onclick="bounceCard(this); openTrendExplanation('sugar')">
     <div class="num" id="sugarNum">–</div>
     <div class="lbl">סוכר</div>
   </div>
-  <div class="strip-card empty" id="cholCard" style="cursor:pointer;" onclick="openTrendExplanation('chol')">
+  <div class="strip-card empty" id="cholCard" style="cursor:pointer;" onclick="bounceCard(this); openTrendExplanation('chol')">
     <div class="num" id="cholNum">–</div>
     <div class="lbl">כולסטרול</div>
   </div>
@@ -1141,6 +1141,7 @@ body {
           <button class="action-btn delete-btn" onclick="deleteMeal(${i})" title="מחיקה">🗑️</button>
         </div>
       </div>`).join('');
+    document.querySelectorAll('#mealsList .item-card').forEach(makePressable);
   }
 
   function openMealImage(idx) {
@@ -1220,6 +1221,7 @@ body {
           <button class="action-btn delete-btn" onclick="deleteActivity(${i})" title="מחיקה">🗑️</button>
         </div>
       </div>`).join('');
+    document.querySelectorAll('#actList .item-card').forEach(makePressable);
   }
 
   // SUMMARIES
@@ -1975,7 +1977,6 @@ body {
     el.addEventListener('touchend', release, { passive: true });
     el.addEventListener('touchcancel', release, { passive: true });
   }
-  document.querySelectorAll('.strip-card').forEach(makePressable);
   makePressable(document.querySelector('.topbar-logo'));
   makePressable(document.querySelector('.greeting h2'));
 
