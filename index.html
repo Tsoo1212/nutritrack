@@ -464,33 +464,12 @@ body {
 /* WAVE BOUNCE for home return */
 @keyframes cardWave {
   0%,100% { transform: translateY(0); }
-  35%     { transform: translateY(-12px); }
-  65%     { transform: translateY(3px); }
+  35%     { transform: translateY(-6px); }
+  65%     { transform: translateY(2px); }
 }
 .strip-card.wave-up { animation: cardWave 0.65s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
-/* SECTION EMOJI ANIMATIONS */
-.section-emoji { display: inline-block; transform-origin: center; }
-@keyframes plateWiggle {
-  0%,100% { transform: scale(1) rotate(0); }
-  18%     { transform: scale(1.45) rotate(-22deg); }
-  36%     { transform: scale(1.45) rotate(22deg); }
-  54%     { transform: scale(1.25) rotate(-12deg); }
-  72%     { transform: scale(1.12) rotate(7deg); }
-  88%     { transform: scale(1.04) rotate(-3deg); }
-}
-@keyframes runAnim {
-  0%,100% { transform: translateX(0) rotate(0); }
-  12%     { transform: translateX(5px) rotate(12deg); }
-  25%     { transform: translateX(0) rotate(0); }
-  37%     { transform: translateX(-5px) rotate(-12deg); }
-  50%     { transform: translateX(0) rotate(0); }
-  62%     { transform: translateX(5px) rotate(12deg); }
-  75%     { transform: translateX(0) rotate(0); }
-  87%     { transform: translateX(-5px) rotate(-12deg); }
-}
-#mealsEmoji.emoji-anim { animation: plateWiggle 3s ease; }
-#actEmoji.emoji-anim   { animation: runAnim 3s ease; }
+.section-emoji { display: inline-block; }
 
 /* STRIP CARD POP on update */
 @keyframes cardPop {
@@ -2023,23 +2002,6 @@ body {
       lastCholCard  = savedTrend.chol  || '';
     }
     setTimeout(() => triggerHomeAnimations(), 400);
-
-    // Section emoji animations on scroll
-    const emojiObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          el.classList.remove('emoji-anim');
-          void el.offsetWidth;
-          el.classList.add('emoji-anim');
-          setTimeout(() => el.classList.remove('emoji-anim'), 3000);
-        }
-      });
-    }, { threshold: 0.8 });
-    const mealsEmoji = document.getElementById('mealsEmoji');
-    const actEmoji   = document.getElementById('actEmoji');
-    if (mealsEmoji) emojiObserver.observe(mealsEmoji);
-    if (actEmoji)   emojiObserver.observe(actEmoji);
   });
 
   // Global: wave the hand emoji on ANY interaction with the site
