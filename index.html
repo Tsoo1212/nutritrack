@@ -2084,7 +2084,7 @@ body {
     document.getElementById('interimModal').classList.add('open');
     const contentEl = document.getElementById('interimContent');
     const userMsg = `סיכום ביניים – אמצע היום.\n\n${formatDayForAI()}\n\nאנא תני לי המלצות ספציפיות להמשך היום – מה לאכול, מה להימנע, ואם כדאי להוסיף פעילות.`;
-    callNutri(userMsg, contentEl, { model: 'claude-haiku-4-5-20251001', maxTokens: 900 }).then(text => {
+    callNutri(userMsg, contentEl).then(text => {
       if (text) {
         saveFeedbackToHistory('interim', text);
         handleSummaryResult(text);
