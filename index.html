@@ -69,6 +69,15 @@ body {
 .ai-response strong { font-weight: 700; color: var(--text); }
 .ai-response em { color: var(--text-soft); }
 .ai-response hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.stream-cursor {
+  display: inline-block;
+  width: 2px; height: 1em;
+  background: var(--peach);
+  margin-right: 2px;
+  vertical-align: text-bottom;
+  animation: blink 0.7s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
 
 /* AI LOADING */
 .ai-loading {
@@ -795,7 +804,7 @@ body {
   const NUTRI_SYSTEM = `אתה Nutri – יועץ תזונה קליני של צוף.
 
 ═══ הפרסונה שלך ═══
-אתה מומחה תזונה ישראלי עם ניסיון קליני. הסגנון שלך מקצועי וישיר – כמו רופא משפחה שמכיר את המטופלת שנים, מדבר בצורה ברורה ועניינית, עם חמימות אנושית אמיתית אך ללא ידידותיות מיותרת. לא חבר – מטפל. לא מרצה – מסביר.
+אתה מומחה תזונה ישראלי עם ניסיון קליני. הסגנון שלך מקצועי, חם ומעודד – מדבר בצורה ברורה ועניינית, עם נוכחות אנושית שמחזקת ותומכת. אתה מאמין בצוף ומחזק אותה כשהיא עושה דברים נכונים. לעולם לא ציני, לעולם לא משתמש בהומור. אינך חבר אישי – אבל אתה מטפל שאפשר לסמוך עליו ולהרגיש בנוח איתו. לא מרצה – מסביר, מכוון ומחזק.
 כשאתה מדבר על עצמך: לשון זכר (ידעתי, אמרתי, אני חושב).
 כשאתה פונה לצוף: לשון נקבה (תמשיכי, את יכולה, המשיכי).
 
@@ -1966,7 +1975,7 @@ body {
   }
 
   /* ---- AI CALL ---- */
-  async function callNutri(userMessage, contentEl) {
+  async function callNutri(userMessage, contentEl, opts = {}) {
     const apiKey = localStorage.getItem('nutri_api_key');
     if (!apiKey) {
       contentEl.innerHTML = `
@@ -1982,6 +1991,9 @@ body {
         <div class="ai-loading-text">Nutri חושבת עליך... ✨</div>
       </div>`;
 
+    const model = opts.model || 'claude-sonnet-4-6';
+    const maxTokens = opts.maxTokens || 2048;
+
     try {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -1992,10 +2004,11 @@ body {
           'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 2048,
+          model,
+          max_tokens: maxTokens,
           system: buildSystemPrompt(),
-          messages: [{ role: 'user', content: userMessage }]
+          messages: [{ role: 'user', content: userMessage }],
+          stream: true
         })
       });
 
@@ -2006,19 +2019,45 @@ body {
         return;
       }
 
-      const data = await resp.json();
-      const text = data.content?.[0]?.text || '';
-      contentEl.innerHTML = `<div class="ai-response">${marked.parse(text)}</div>`;
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let inputTokens = 0, outputTokens = 0;
+      let streamTarget = null;
 
-      // Accumulate token usage
-      const u = data.usage || {};
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (!raw || raw === '[DONE]') continue;
+          try {
+            const evt = JSON.parse(raw);
+            if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+              fullText += evt.delta.text;
+              if (!streamTarget) {
+                contentEl.innerHTML = `<div class="ai-response" id="nutri-stream"></div>`;
+                streamTarget = document.getElementById('nutri-stream');
+              }
+              streamTarget.innerHTML = marked.parse(fullText) + '<span class="stream-cursor"></span>';
+            }
+            if (evt.type === 'message_start') inputTokens = evt.message?.usage?.input_tokens || 0;
+            if (evt.type === 'message_delta') outputTokens = evt.usage?.output_tokens || 0;
+          } catch {}
+        }
+      }
+
+      if (streamTarget) streamTarget.innerHTML = marked.parse(fullText);
+
       const stored = JSON.parse(localStorage.getItem('nutri_usage') || '{"input":0,"output":0,"calls":0}');
-      stored.input  += u.input_tokens  || 0;
-      stored.output += u.output_tokens || 0;
+      stored.input  += inputTokens;
+      stored.output += outputTokens;
       stored.calls  += 1;
       localStorage.setItem('nutri_usage', JSON.stringify(stored));
 
-      return text;
+      return fullText;
     } catch (e) {
       contentEl.innerHTML = `<p style="color:#c0392b;font-size:14px;">❌ שגיאת רשת: ${e.message}</p>`;
     }
@@ -2045,7 +2084,7 @@ body {
     document.getElementById('interimModal').classList.add('open');
     const contentEl = document.getElementById('interimContent');
     const userMsg = `סיכום ביניים – אמצע היום.\n\n${formatDayForAI()}\n\nאנא תני לי המלצות ספציפיות להמשך היום – מה לאכול, מה להימנע, ואם כדאי להוסיף פעילות.`;
-    callNutri(userMsg, contentEl).then(text => {
+    callNutri(userMsg, contentEl, { model: 'claude-haiku-4-5-20251001', maxTokens: 900 }).then(text => {
       if (text) {
         saveFeedbackToHistory('interim', text);
         handleSummaryResult(text);
