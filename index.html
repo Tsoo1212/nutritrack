@@ -4,7 +4,51 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light only">
+<meta name="theme-color" content="#E8956D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="NutriTrack">
+<link rel="apple-touch-icon" id="appTouchIcon">
 <title>NutriTrack</title>
+<script>
+(function(){
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  const x = c.getContext('2d');
+  // Peach rounded background
+  x.fillStyle = '#E8956D';
+  x.beginPath();
+  const r = 110;
+  x.moveTo(r, 0); x.lineTo(512-r, 0);
+  x.arcTo(512, 0, 512, r, r); x.lineTo(512, 512-r);
+  x.arcTo(512, 512, 512-r, 512, r); x.lineTo(r, 512);
+  x.arcTo(0, 512, 0, 512-r, r); x.lineTo(0, r);
+  x.arcTo(0, 0, r, 0, r); x.closePath();
+  x.fill();
+  // White "N" letter
+  x.fillStyle = '#fff';
+  x.font = 'bold 310px Arial';
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  x.fillText('N', 256, 268);
+  const icon = c.toDataURL('image/png');
+  document.getElementById('appTouchIcon').href = icon;
+  // Web app manifest for Android/Chrome
+  const manifest = {
+    name: 'NutriTrack',
+    short_name: 'NutriTrack',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#FFF8F4',
+    theme_color: '#E8956D',
+    icons: [{ src: icon, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }]
+  };
+  const ml = document.createElement('link');
+  ml.rel = 'manifest';
+  ml.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' }));
+  document.head.appendChild(ml);
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
