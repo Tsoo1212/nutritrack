@@ -417,6 +417,20 @@ body {
   animation: shimmer 0.6s ease;
 }
 
+/* TREND ARROWS on sugar/cholesterol cards */
+@keyframes arrowSlideIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.trend-arrow {
+  display: inline-block;
+  font-size: 22px;
+  font-weight: 700;
+  animation: arrowSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.strip-card.trend-up .trend-arrow   { color: #2e7d4f; }
+.strip-card.trend-down .trend-arrow { color: #7a1a2e; }
+
 /* STRIP CARD POP on update */
 @keyframes cardPop {
   0%   { transform: scale(1); }
@@ -634,12 +648,12 @@ body {
     <div class="num" id="actCount">0</div>
     <div class="lbl">פעילות</div>
   </div>
-  <div class="strip-card empty">
-    <div class="num">–</div>
+  <div class="strip-card empty" id="sugarCard">
+    <div class="num" id="sugarNum">–</div>
     <div class="lbl">סוכר</div>
   </div>
-  <div class="strip-card empty">
-    <div class="num">–</div>
+  <div class="strip-card empty" id="cholCard">
+    <div class="num" id="cholNum">–</div>
     <div class="lbl">כולסטרול</div>
   </div>
 </div>
@@ -1811,13 +1825,30 @@ body {
   }
 
   /* ---- SUMMARY RESULT HANDLER ---- */
+  function setTrendCards(direction) {
+    ['sugarCard', 'cholCard'].forEach(cardId => {
+      const card = document.getElementById(cardId);
+      const numEl = document.getElementById(cardId === 'sugarCard' ? 'sugarNum' : 'cholNum');
+      if (!card || !numEl) return;
+      card.classList.remove('trend-up', 'trend-down');
+      void card.offsetWidth;
+      card.classList.add(direction === 'up' ? 'trend-up' : 'trend-down');
+      numEl.innerHTML = `<span class="trend-arrow">${direction === 'up' ? '↑' : '↓'}</span>`;
+    });
+  }
+
   function handleSummaryResult(text) {
     const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','יפה','חיובי','הצלחה','ממש טוב','בסדר גמור','מצוין'];
     const negativeWords = ['לא מומלץ','בעייתי','סוכר גבוה','גליקמי גבוה','להימנע','לא אידיאלי','חשש','עלייה מהירה','ספייק','עודף סוכר'];
     const isPositive = positiveWords.some(w => text.includes(w));
     const isNegative = !isPositive && negativeWords.some(w => text.includes(w));
-    if (isPositive) setTimeout(() => launchConfetti(false), 300);
-    else if (isNegative) setTimeout(() => launchConfetti(true), 300);
+    if (isPositive) {
+      setTimeout(() => launchConfetti(false), 300);
+      setTrendCards('up');
+    } else if (isNegative) {
+      setTimeout(() => launchConfetti(true), 300);
+      setTrendCards('down');
+    }
   }
 
   function rewave(el) {
