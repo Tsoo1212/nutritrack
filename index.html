@@ -47,7 +47,7 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-.topbar-logo { font-size: 20px; font-weight: 700; color: var(--peach-dark); }
+.topbar-logo { font-size: 22px; font-weight: 700; color: var(--peach-dark); }
 .topbar-logo span { color: var(--peach); font-weight: 300; }
 .topbar-date { font-size: 13px; color: var(--text-soft); }
 .topbar-settings {
@@ -666,8 +666,10 @@ body {
 
 <div class="topbar">
   <div class="topbar-logo">Nutri<span>Track</span></div>
-  <div class="topbar-date" id="todayDate"></div>
-  <button class="topbar-settings" onclick="openSettings()" title="הגדרות">⚙️</button>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="topbar-date" id="todayDate"></div>
+    <button class="topbar-settings" onclick="openSettings()" title="הגדרות">⚙️</button>
+  </div>
 </div>
 
 <div class="sky-scene sky-morning" id="skyScene">
