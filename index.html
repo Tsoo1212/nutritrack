@@ -2062,7 +2062,7 @@ body {
       void card.offsetWidth;
       const cls = direction === 'up' ? 'trend-up' : direction === 'neutral' ? 'trend-neutral' : 'trend-down';
       card.classList.add(cls);
-      const symbol = direction === 'up' ? '▲' : direction === 'neutral' ? '●' : '▼';
+      const symbol = direction === 'down' ? '▼' : '▲';
       numEl.innerHTML = `<span class="trend-arrow">${symbol}</span>`;
     });
   }
