@@ -920,12 +920,20 @@ body {
 - תן הנחיה מיידית אחת: תנועה, שתייה, מה לאכול עכשיו לאיזון
 - בסיכום יומי שבו היו ארוחות בעייתיות – אל תסיים במשפט מעודד שמרכך את הבעיה
 
-═══ הערכת סנטימנט – חובה ═══
-בסוף כל סיכום ביניים ויומי, הוסף בשורה נפרדת כסיום מוחלט של התגובה:
+═══ הערכת סנטימנט וכרטיסי מידע – חובה ═══
+בסוף כל סיכום ביניים ויומי, אחרי הטקסט הרגיל, הוסף בדיוק בפורמט הזה (ללא שינוי):
+
 [TREND:חיובי] – אם ארוחות היום היו ברמה מקובלת מבחינת סוכר וגליקמיה
 [TREND:שלילי] – אם הוזן מזון עם עומס גליקמי גבוה, סוכר עודף, מזון מעובד, או שהיום היה בעייתי תזונתית
-כלל ברזל לטרום-סוכרת: כל ארוחה עם ממתקים / מיצים / עוגה / לחם לבן בכמות גדולה / חטיפים מתוקים → [TREND:שלילי] ללא יוצא מן הכלל.
-שורה זו חייבת להיות השורה האחרונה בתגובה, ללא שום טקסט אחריה.`;
+כלל ברזל: ממתקים / מיצים / עוגה / לחם לבן בכמות גדולה / חטיפים מתוקים → [TREND:שלילי] ללא יוצא מן הכלל.
+
+אחרי שורת ה-TREND, הוסף בפורמט המדויק הבא:
+===SUGAR===
+פסקה קצרה של 4 משפטים בלבד, אך ורק על סוכר/גלוקוז/גליקמיה: משפט 1 – הערכה כללית חיובית או שלילית של הסוכר ביום. משפט 2 – ההשפעה הגליקמית הצפויה. משפט 3 – המלצה ספציפית ראשונה להמשך היום. משפט 4 – המלצה ספציפית שנייה להמשך היום.
+===CHOL===
+פסקה קצרה של 4 משפטים בלבד, אך ורק על שומנים/כולסטרול: משפט 1 – הערכה כללית חיובית או שלילית של השומנים ביום. משפט 2 – ההשפעה הצפויה על הכולסטרול. משפט 3 – המלצה ספציפית ראשונה להמשך היום. משפט 4 – המלצה ספציפית שנייה להמשך היום.
+===END===
+אין להוסיף שום טקסט אחרי ===END===.`;
 
 
   // Load from localStorage
@@ -1875,6 +1883,8 @@ body {
   /* ---- SUMMARY RESULT HANDLER ---- */
   let lastTrend = null;
   let lastSummaryText = '';
+  let lastSugarCard = '';
+  let lastCholCard = '';
 
   function setTrendCards(direction) {
     ['sugarCard', 'cholCard'].forEach(cardId => {
@@ -1890,7 +1900,14 @@ body {
 
   function handleSummaryResult(rawText, contentEl) {
     const trendMatch = rawText.match(/\[TREND:(חיובי|שלילי)\]/);
-    const cleanText = rawText.replace(/\n?\[TREND:(?:חיובי|שלילי)\]\n?/g, '').trimEnd();
+    const sugarMatch = rawText.match(/===SUGAR===\s*([\s\S]*?)\s*===CHOL===/);
+    const cholMatch  = rawText.match(/===CHOL===\s*([\s\S]*?)\s*===END===/);
+    lastSugarCard = sugarMatch ? sugarMatch[1].trim() : '';
+    lastCholCard  = cholMatch  ? cholMatch[1].trim()  : '';
+    const cleanText = rawText
+      .replace(/\[TREND:(?:חיובי|שלילי)\]\n?/g, '')
+      .replace(/===SUGAR===[\s\S]*?===END===\n?/g, '')
+      .trimEnd();
     lastSummaryText = cleanText;
     if (contentEl) {
       contentEl.innerHTML = `<div class="ai-response">${marked.parse(cleanText)}</div>`;
@@ -1914,13 +1931,8 @@ body {
   }
 
   function openTrendExplanation(type) {
-    if (!lastSummaryText) return;
-    const keywords = type === 'sugar'
-      ? ['סוכר','גליקמי','פחמימ','אינסולין','ספייק','גלוקוז','קפיצה','עמילן']
-      : ['כולסטרול','שומן','HDL','LDL','טריגליצריד','לב','עורקים','ליפיד'];
-    const paras = lastSummaryText.split(/\n\n+/);
-    const relevant = paras.filter(p => keywords.some(k => p.includes(k)));
-    const content = relevant.length > 0 ? relevant.join('\n\n') : lastSummaryText;
+    const content = type === 'sugar' ? lastSugarCard : lastCholCard;
+    if (!content) return;
     const dir = lastTrend || 'up';
     const titles = {
       sugar: { up: '✅ סוכר – מה הלך טוב', down: '⚠️ סוכר – מה כדאי לשפר' },
@@ -1928,7 +1940,7 @@ body {
     };
     document.getElementById('trendModalTitle').textContent = titles[type]?.[dir] ?? '';
     document.getElementById('trendModalContent').innerHTML =
-      `<div class="ai-response">${marked.parse(content)}</div>`;
+      `<div class="ai-response"><p>${content}</p></div>`;
     document.getElementById('trendModal').classList.add('open');
   }
 
