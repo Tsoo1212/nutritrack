@@ -96,13 +96,18 @@ body {
   flex: 1;
   background: var(--peach);
   border-radius: 14px;
-  padding: 10px 6px;
+  padding: 10px 6px 8px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 74px;
 }
 .strip-card.empty { background: #FFE8D6; border: 1.5px solid #F5C4A1; }
-.strip-card .num { font-size: 18px; font-weight: 700; color: var(--white); }
+.strip-card .num { font-size: 26px; font-weight: 700; color: var(--white); flex: 1; display: flex; align-items: center; justify-content: center; }
 .strip-card.empty .num { color: var(--peach-dark); }
-.strip-card .lbl { font-size: 10px; color: rgba(255,255,255,0.85); margin-top: 3px; }
+.strip-card .lbl { font-size: 10px; color: rgba(255,255,255,0.85); }
 .strip-card.empty .lbl { color: var(--peach-dark); }
 
 /* SECTION HEADER */
@@ -427,9 +432,9 @@ body {
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 .trend-arrow {
-  display: block;
-  font-size: 34px;
-  line-height: 1.1;
+  display: inline-block;
+  font-size: 30px;
+  line-height: 1;
   animation: arrowSlideIn 3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 .strip-card.trend-up   { background: #e8f5ec; border: 1.5px solid #a8d5b5; }
@@ -669,11 +674,11 @@ body {
     <div class="num" id="actCount">0</div>
     <div class="lbl">פעילות</div>
   </div>
-  <div class="strip-card empty" id="sugarCard" style="cursor:pointer;" onclick="bounceCard(this); openTrendExplanation()">
+  <div class="strip-card empty" id="sugarCard" style="cursor:pointer;" onclick="bounceCard(this); openTrendExplanation('sugar')">
     <div class="num" id="sugarNum">–</div>
     <div class="lbl">סוכר</div>
   </div>
-  <div class="strip-card empty" id="cholCard" style="cursor:pointer;" onclick="bounceCard(this); openTrendExplanation()">
+  <div class="strip-card empty" id="cholCard" style="cursor:pointer;" onclick="bounceCard(this); openTrendExplanation('chol')">
     <div class="num" id="cholNum">–</div>
     <div class="lbl">כולסטרול</div>
   </div>
@@ -1867,8 +1872,8 @@ body {
   }
 
   function handleSummaryResult(text) {
-    const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','יפה','חיובי','הצלחה','ממש טוב','בסדר גמור','מצוין'];
-    const negativeWords = ['לא מומלץ','בעייתי','סוכר גבוה','גליקמי גבוה','להימנע','לא אידיאלי','חשש','עלייה מהירה','ספייק','עודף סוכר'];
+    const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','יפה','חיובי','הצלחה','ממש טוב','בסדר גמור','מצוין','ארוחה מאוזנת','בחירה טובה','בחירה חכמה','איזון טוב'];
+    const negativeWords = ['בעייתי','סוכר גבוה','גליקמי גבוה','חשש','עלייה מהירה','ספייק','עודף סוכר','ארוחה שמנה','מנה כבדה','קפיצה חדה','בחירה לא טובה','ארוחה כבדה'];
     const isPositive = positiveWords.some(w => text.includes(w));
     const isNegative = !isPositive && negativeWords.some(w => text.includes(w));
     lastSummaryText = text;
@@ -1888,12 +1893,22 @@ body {
     setTimeout(() => el.classList.remove('bouncing'), 2000);
   }
 
-  function openTrendExplanation() {
+  function openTrendExplanation(type) {
     if (!lastSummaryText) return;
-    const titleEl = document.getElementById('trendModalTitle');
-    titleEl.textContent = lastTrend === 'up' ? '✅ מה הלך טוב היום' : '⚠️ מה כדאי לשים לב';
+    const keywords = type === 'sugar'
+      ? ['סוכר','גליקמי','פחמימ','אינסולין','ספייק','גלוקוז','קפיצה','עמילן']
+      : ['כולסטרול','שומן','HDL','LDL','טריגליצריד','לב','עורקים','ליפיד'];
+    const paras = lastSummaryText.split(/\n\n+/);
+    const relevant = paras.filter(p => keywords.some(k => p.includes(k)));
+    const content = relevant.length > 0 ? relevant.join('\n\n') : lastSummaryText;
+    const dir = lastTrend || 'up';
+    const titles = {
+      sugar: { up: '✅ סוכר – מה הלך טוב', down: '⚠️ סוכר – מה כדאי לשפר' },
+      chol:  { up: '✅ כולסטרול – מה הלך טוב', down: '⚠️ כולסטרול – מה כדאי לשפר' }
+    };
+    document.getElementById('trendModalTitle').textContent = titles[type]?.[dir] ?? '';
     document.getElementById('trendModalContent').innerHTML =
-      `<div class="ai-response">${marked.parse(lastSummaryText)}</div>`;
+      `<div class="ai-response">${marked.parse(content)}</div>`;
     document.getElementById('trendModal').classList.add('open');
   }
 
