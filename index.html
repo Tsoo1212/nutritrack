@@ -829,7 +829,7 @@ body {
 - כולסטרול: אין נתונים עדיין.
 
 ═══ עקרונות תזונתיים לצוף ═══
-- קיבה רגישה: להימנע מקפה, שוקולד, מזון שומני, חריף, הדרים, עגבניות, אלכוהול
+- קיבה רגישה: להימנע משוקולד, מזון שומני, חריף, הדרים, עגבניות, אלכוהול. קפה – אין להגביל ואין להעיר עליו מבחינת קיבה; אם יש חלב או שמנת בקפה, להתייחס לחלב בלבד מבחינת ערכי סוכר ואינדקס גליקמי.
 - דלקתיות: להעדיף אומגה 3, כורכום, ירקות ירוקים, אגוזי מלך
 - כבד שומני: ללא סוכר מוסף, שומן רווי, מזון מעובד
 - טרום-סוכרת: אינדקס גליקמי נמוך, פחמימות מורכבות בלבד
@@ -873,7 +873,12 @@ body {
 - ציין את ההשפעה הגליקמית הצפויה (עלייה מהירה / מתונה / איטית) בהתאם לסוג המזון
 - הצע פעולה מאזנת מיידית אם נדרש: תנועה קלה, שתיית מים, מזון מאט ספיגה
 - בכל המלצת ארוחה להמשך היום – חובה להסביר את המנגנון: "X יאזן את הסוכר כי Y"
-- דוגמה נכונה: "קטניות + ירק ירוק יאטו את ספיגת הסוכר לדם בגלל הסיבים והחלבון, ויעזרו לייצב את הגלוקוז אחרי הספייק של הבוקר"`;
+- דוגמה נכונה: "קטניות + ירק ירוק יאטו את ספיגת הסוכר לדם בגלל הסיבים והחלבון, ויעזרו לייצב את הגלוקוז אחרי הספייק של הבוקר"
+
+═══ שימוש בבדיקות דם ═══
+- בדיקות הדם הן רקע אישי לכיוון ההמלצות – אין לציין את הערכים המספריים בסיכומים השוטפים
+- כשמוזנות בדיקות דם חדשות, הן מהוות נקודת ייחוס לכיול ההמלצות לגבי סוכר ושאר הפרמטרים
+- לציין ערכים מספריים רק אם המשתמשת שואלת ישירות על תוצאות הבדיקות`;
 
   // Load from localStorage
   let meals = JSON.parse(localStorage.getItem('nutri_meals') || '[]');
@@ -1770,14 +1775,16 @@ body {
 
 
   /* ---- CONFETTI ---- */
-  function launchConfetti() {
+  function launchConfetti(negative = false) {
     const canvas = document.getElementById('confettiCanvas');
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const colors = ['#7EC8E3','#A8D8EA','#B8E0F7','#5BB8D4','#3AAED8','#E0F4FF','#BDE0FE'];
+    const colors = negative
+      ? ['#FF6B6B','#FF4444','#CC0000','#FF8888','#FF3333','#FFB3B3','#E00000']
+      : ['#7EC8E3','#A8D8EA','#B8E0F7','#5BB8D4','#3AAED8','#E0F4FF','#BDE0FE'];
     const pieces = Array.from({length: 80}, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * -canvas.height,
@@ -1801,25 +1808,25 @@ body {
         ctx.restore();
         p.y += p.speed;
         p.rot += p.spin;
+        if (p.y > canvas.height) p.y = -20;
       });
-      if (pieces.some(p => p.y < canvas.height)) {
-        frame = requestAnimationFrame(draw);
-      } else {
-        canvas.style.display = 'none';
-      }
+      frame = requestAnimationFrame(draw);
     };
     draw();
     setTimeout(() => {
       cancelAnimationFrame(frame);
       canvas.style.display = 'none';
-    }, 2000);
+    }, 3000);
   }
 
   /* ---- SUMMARY RESULT HANDLER ---- */
   function handleSummaryResult(text) {
-    const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','יפה','חיובי','הצלחה'];
+    const positiveWords = ['כל הכבוד','מעולה','נהדר','טוב מאוד','שיפור','יפה','חיובי','הצלחה','ממש טוב','בסדר גמור','מצוין'];
+    const negativeWords = ['לא מומלץ','בעייתי','סוכר גבוה','גליקמי גבוה','להימנע','לא אידיאלי','חשש','עלייה מהירה','ספייק','עודף סוכר'];
     const isPositive = positiveWords.some(w => text.includes(w));
-    if (isPositive) setTimeout(() => launchConfetti(), 300);
+    const isNegative = !isPositive && negativeWords.some(w => text.includes(w));
+    if (isPositive) setTimeout(() => launchConfetti(false), 300);
+    else if (isNegative) setTimeout(() => launchConfetti(true), 300);
   }
 
   function rewave(el) {
@@ -2030,6 +2037,21 @@ body {
       const decoder = new TextDecoder();
       let fullText = '';
       let inputTokens = 0, outputTokens = 0;
+      let streamTarget = null;
+      let renderPending = false;
+
+      const scheduleRender = () => {
+        if (renderPending) return;
+        renderPending = true;
+        setTimeout(() => {
+          if (!streamTarget) {
+            contentEl.innerHTML = `<div class="ai-response" id="nutri-stream"></div>`;
+            streamTarget = document.getElementById('nutri-stream');
+          }
+          streamTarget.innerHTML = marked.parse(fullText);
+          renderPending = false;
+        }, 150);
+      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -2043,6 +2065,7 @@ body {
             const evt = JSON.parse(raw);
             if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
               fullText += evt.delta.text;
+              scheduleRender();
             }
             if (evt.type === 'message_start') inputTokens = evt.message?.usage?.input_tokens || 0;
             if (evt.type === 'message_delta') outputTokens = evt.usage?.output_tokens || 0;
@@ -2050,7 +2073,8 @@ body {
         }
       }
 
-      contentEl.innerHTML = `<div class="ai-response">${marked.parse(fullText)}</div>`;
+      if (streamTarget) streamTarget.innerHTML = marked.parse(fullText);
+      else contentEl.innerHTML = `<div class="ai-response">${marked.parse(fullText)}</div>`;
 
       const stored = JSON.parse(localStorage.getItem('nutri_usage') || '{"input":0,"output":0,"calls":0}');
       stored.input  += inputTokens;
