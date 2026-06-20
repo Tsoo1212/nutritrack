@@ -69,15 +69,6 @@ body {
 .ai-response strong { font-weight: 700; color: var(--text); }
 .ai-response em { color: var(--text-soft); }
 .ai-response hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
-.stream-cursor {
-  display: inline-block;
-  width: 2px; height: 1em;
-  background: var(--peach);
-  margin-right: 2px;
-  vertical-align: text-bottom;
-  animation: blink 0.7s step-end infinite;
-}
-@keyframes blink { 50% { opacity: 0; } }
 
 /* AI LOADING */
 .ai-loading {
@@ -2037,21 +2028,6 @@ body {
       const decoder = new TextDecoder();
       let fullText = '';
       let inputTokens = 0, outputTokens = 0;
-      let streamTarget = null;
-      let renderPending = false;
-
-      const scheduleRender = () => {
-        if (renderPending) return;
-        renderPending = true;
-        setTimeout(() => {
-          if (!streamTarget) {
-            contentEl.innerHTML = `<div class="ai-response" id="nutri-stream"></div>`;
-            streamTarget = document.getElementById('nutri-stream');
-          }
-          streamTarget.innerHTML = marked.parse(fullText);
-          renderPending = false;
-        }, 150);
-      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -2065,7 +2041,6 @@ body {
             const evt = JSON.parse(raw);
             if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
               fullText += evt.delta.text;
-              scheduleRender();
             }
             if (evt.type === 'message_start') inputTokens = evt.message?.usage?.input_tokens || 0;
             if (evt.type === 'message_delta') outputTokens = evt.usage?.output_tokens || 0;
@@ -2073,8 +2048,7 @@ body {
         }
       }
 
-      if (streamTarget) streamTarget.innerHTML = marked.parse(fullText);
-      else contentEl.innerHTML = `<div class="ai-response">${marked.parse(fullText)}</div>`;
+      contentEl.innerHTML = `<div class="ai-response">${marked.parse(fullText)}</div>`;
 
       const stored = JSON.parse(localStorage.getItem('nutri_usage') || '{"input":0,"output":0,"calls":0}');
       stored.input  += inputTokens;
