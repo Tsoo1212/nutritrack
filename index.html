@@ -443,6 +443,9 @@ body {
 .strip-card.trend-up   { background: #e8f5ec; border: 1.5px solid #a8d5b5; }
 .strip-card.trend-up   .lbl { color: #2e7d4f; }
 .strip-card.trend-up   .trend-arrow { color: #2e7d4f; }
+.strip-card.trend-neutral { background: #fdfbe8; border: 1.5px solid #dfd060; }
+.strip-card.trend-neutral .lbl { color: #7a6500; }
+.strip-card.trend-neutral .trend-arrow { color: #b89800; }
 .strip-card.trend-down { background: #f9ebe9; border: 1.5px solid #d4a0a0; }
 .strip-card.trend-down .lbl { color: #7a1a2e; }
 .strip-card.trend-down .trend-arrow { color: #7a1a2e; }
@@ -970,9 +973,10 @@ body {
 ═══ הערכת סנטימנט וכרטיסי מידע – חובה ═══
 בסוף כל סיכום ביניים ויומי, אחרי הטקסט הרגיל, הוסף בדיוק בפורמט הזה (ללא שינוי):
 
-[TREND:חיובי] – אם ארוחות היום היו ברמה מקובלת מבחינת סוכר וגליקמיה
-[TREND:שלילי] – אם הוזן מזון עם עומס גליקמי גבוה, סוכר עודף, מזון מעובד, או שהיום היה בעייתי תזונתית
-כלל ברזל: ממתקים / מיצים / עוגה / לחם לבן בכמות גדולה / חטיפים מתוקים → [TREND:שלילי] ללא יוצא מן הכלל.
+[TREND:חיובי] – אם ארוחות היום היו ברמה טובה מבחינת סוכר וגליקמיה, ללא חריגות משמעותיות
+[TREND:ניטרלי] – אם היום היה סביר אבל לא אופטימלי: חטיף אחד בעייתי, מזון מעובד בכמות קטנה, או לחם לבן בודד – כשהשאר סביר. מצב ביניים שאינו שלילי לגמרי.
+[TREND:שלילי] – אם הוזן מזון עם עומס גליקמי גבוה, סוכר עודף משמעותי, מזון מעובד בכמות, ריבוי ממתקים / מיצים / עוגה / חטיפים מתוקים.
+כלל ברזל: חטיף בודד (כמו ביסלי 100 גרם) לצד ארוחות סבירות → [TREND:ניטרלי]. ריבוי חריגות גליקמיות → [TREND:שלילי].
 
 אחרי שורת ה-TREND, הוסף בפורמט המדויק הבא:
 ===SUGAR===
@@ -1978,16 +1982,18 @@ body {
   makePressable(document.querySelector('.greeting h2'));
 
   /* ---- CONFETTI ---- */
-  function launchConfetti(negative = false) {
+  function launchConfetti(mode = 'positive') {
     const canvas = document.getElementById('confettiCanvas');
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const colors = negative
+    const colors = mode === 'negative'
       ? ['#FF6B6B','#FF4444','#CC0000','#FF8888','#FF3333','#FFB3B3','#E00000']
-      : ['#7EC8E3','#A8D8EA','#B8E0F7','#5BB8D4','#3AAED8','#E0F4FF','#BDE0FE'];
+      : mode === 'neutral'
+        ? ['#FFE44D','#FFD700','#FFC200','#FFE87A','#FFF0A0','#E8C800','#F5D800']
+        : ['#7EC8E3','#A8D8EA','#B8E0F7','#5BB8D4','#3AAED8','#E0F4FF','#BDE0FE'];
     const pieces = Array.from({length: 80}, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * -canvas.height,
@@ -2052,21 +2058,23 @@ body {
       const card = document.getElementById(cardId);
       const numEl = document.getElementById(cardId === 'sugarCard' ? 'sugarNum' : 'cholNum');
       if (!card || !numEl) return;
-      card.classList.remove('trend-up', 'trend-down', 'empty');
+      card.classList.remove('trend-up', 'trend-down', 'trend-neutral', 'empty');
       void card.offsetWidth;
-      card.classList.add(direction === 'up' ? 'trend-up' : 'trend-down');
-      numEl.innerHTML = `<span class="trend-arrow">${direction === 'up' ? '▲' : '▼'}</span>`;
+      const cls = direction === 'up' ? 'trend-up' : direction === 'neutral' ? 'trend-neutral' : 'trend-down';
+      card.classList.add(cls);
+      const symbol = direction === 'up' ? '▲' : direction === 'neutral' ? '●' : '▼';
+      numEl.innerHTML = `<span class="trend-arrow">${symbol}</span>`;
     });
   }
 
   function handleSummaryResult(rawText, contentEl) {
-    const trendMatch = rawText.match(/\[TREND:(חיובי|שלילי)\]/);
+    const trendMatch = rawText.match(/\[TREND:(חיובי|ניטרלי|שלילי)\]/);
     const sugarMatch = rawText.match(/===SUGAR===\s*([\s\S]*?)\s*===CHOL===/);
     const cholMatch  = rawText.match(/===CHOL===\s*([\s\S]*?)\s*===END===/);
     lastSugarCard = sugarMatch ? sugarMatch[1].trim() : '';
     lastCholCard  = cholMatch  ? cholMatch[1].trim()  : '';
     const cleanText = rawText
-      .replace(/\[TREND:(?:חיובי|שלילי)\]\n?/g, '')
+      .replace(/\[TREND:(?:חיובי|ניטרלי|שלילי)\]\n?/g, '')
       .replace(/===SUGAR===[\s\S]*?===END===\n?/g, '')
       .trimEnd();
     lastSummaryText = cleanText;
@@ -2076,10 +2084,13 @@ body {
     if (trendMatch) {
       if (trendMatch[1] === 'חיובי') {
         lastTrend = 'up';
-        setTimeout(() => launchConfetti(false), 300);
+        setTimeout(() => launchConfetti('positive'), 300);
+      } else if (trendMatch[1] === 'ניטרלי') {
+        lastTrend = 'neutral';
+        setTimeout(() => launchConfetti('neutral'), 300);
       } else {
         lastTrend = 'down';
-        setTimeout(() => launchConfetti(true), 300);
+        setTimeout(() => launchConfetti('negative'), 300);
       }
       saveTrendToStorage();
     }
@@ -2112,8 +2123,8 @@ body {
     if (!content) return;
     const dir = lastTrend || 'up';
     const titles = {
-      sugar: { up: '✅ סוכר – מה הלך טוב', down: '⚠️ סוכר – מה כדאי לשפר' },
-      chol:  { up: '✅ כולסטרול – מה הלך טוב', down: '⚠️ כולסטרול – מה כדאי לשפר' }
+      sugar: { up: '✅ סוכר – מה הלך טוב', neutral: '🟡 סוכר – יום סביר', down: '⚠️ סוכר – מה כדאי לשפר' },
+      chol:  { up: '✅ כולסטרול – מה הלך טוב', neutral: '🟡 כולסטרול – יום סביר', down: '⚠️ כולסטרול – מה כדאי לשפר' }
     };
     document.getElementById('trendModalTitle').textContent = titles[type]?.[dir] ?? '';
     document.getElementById('trendModalContent').innerHTML =
