@@ -866,7 +866,14 @@ body {
 - כותרות ענייניות לפי הצורך (## בעברית)
 - פסקאות קצרות וממוקדות
 - לסיים תמיד בהמלצה קונקרטית אחת ומשפט סיכום מעודד
-- לא מחליף רופא או דיאטנית – בשאלות רפואיות רציניות, להפנות להתייעצות`;
+- לא מחליף רופא או דיאטנית – בשאלות רפואיות רציניות, להפנות להתייעצות
+
+═══ ניתוח גליקמי – חובה בכל סיכום ═══
+- לכל ארוחה שהוזנה: אמוד בגסות את כמות הפחמימות/סוכר (לדוגמה: "כ־40 גרם פחמימות, מהן כ־15 גרם סוכר")
+- ציין את ההשפעה הגליקמית הצפויה (עלייה מהירה / מתונה / איטית) בהתאם לסוג המזון
+- הצע פעולה מאזנת מיידית אם נדרש: תנועה קלה, שתיית מים, מזון מאט ספיגה
+- בכל המלצת ארוחה להמשך היום – חובה להסביר את המנגנון: "X יאזן את הסוכר כי Y"
+- דוגמה נכונה: "קטניות + ירק ירוק יאטו את ספיגת הסוכר לדם בגלל הסיבים והחלבון, ויעזרו לייצב את הגלוקוז אחרי הספייק של הבוקר"`;
 
   // Load from localStorage
   let meals = JSON.parse(localStorage.getItem('nutri_meals') || '[]');
@@ -2023,7 +2030,6 @@ body {
       const decoder = new TextDecoder();
       let fullText = '';
       let inputTokens = 0, outputTokens = 0;
-      let streamTarget = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -2037,11 +2043,6 @@ body {
             const evt = JSON.parse(raw);
             if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
               fullText += evt.delta.text;
-              if (!streamTarget) {
-                contentEl.innerHTML = `<div class="ai-response" id="nutri-stream"></div>`;
-                streamTarget = document.getElementById('nutri-stream');
-              }
-              streamTarget.innerHTML = marked.parse(fullText) + '<span class="stream-cursor"></span>';
             }
             if (evt.type === 'message_start') inputTokens = evt.message?.usage?.input_tokens || 0;
             if (evt.type === 'message_delta') outputTokens = evt.usage?.output_tokens || 0;
@@ -2049,7 +2050,7 @@ body {
         }
       }
 
-      if (streamTarget) streamTarget.innerHTML = marked.parse(fullText);
+      contentEl.innerHTML = `<div class="ai-response">${marked.parse(fullText)}</div>`;
 
       const stored = JSON.parse(localStorage.getItem('nutri_usage') || '{"input":0,"output":0,"calls":0}');
       stored.input  += inputTokens;
