@@ -481,6 +481,17 @@ body {
 }
 .strip-card.wave-up-long { animation: cardWaveLong 2s ease-in-out both; }
 
+/* PRESS & SPRING-BACK */
+.pressed { transform: scale(1.07); transition: transform 0.12s ease-out; }
+@keyframes springBack {
+  0%   { transform: scale(1.07); }
+  40%  { transform: scale(0.96); }
+  65%  { transform: scale(1.025); }
+  83%  { transform: scale(0.995); }
+  100% { transform: scale(1); }
+}
+.spring-back { animation: springBack 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
 .section-emoji { display: inline-block; }
 
 /* STRIP CARD POP on update */
@@ -1948,6 +1959,26 @@ body {
 
   /* ---- TOP EMOJI BY TIME & WEATHER ---- */
 
+  /* ---- PRESS & SPRING-BACK ---- */
+  function makePressable(el) {
+    if (!el) return;
+    el.addEventListener('touchstart', () => {
+      el.classList.remove('spring-back');
+      void el.offsetWidth;
+      el.classList.add('pressed');
+    }, { passive: true });
+    const release = () => {
+      el.classList.remove('pressed');
+      void el.offsetWidth;
+      el.classList.add('spring-back');
+      setTimeout(() => el.classList.remove('spring-back'), 500);
+    };
+    el.addEventListener('touchend', release, { passive: true });
+    el.addEventListener('touchcancel', release, { passive: true });
+  }
+  document.querySelectorAll('.strip-card').forEach(makePressable);
+  makePressable(document.querySelector('.topbar-logo'));
+  makePressable(document.querySelector('.greeting h2'));
 
   /* ---- CONFETTI ---- */
   function launchConfetti(negative = false) {
