@@ -768,7 +768,7 @@ body {
     <div class="nav-label">שבועי</div>
   </div>
   <div class="nav-item" onclick="tapNav(this); openMonthly()">
-    <div class="nav-icon">📊</div>
+    <div class="nav-icon">🧾</div>
     <div class="nav-label">חודשי</div>
   </div>
   <div class="nav-item" onclick="tapNav(this); openBloodTests()">
@@ -1533,7 +1533,7 @@ body {
         ✨ לאחר חיבור Nutri תופיע כאן סקירה חודשית חכמה עם תובנות אישיות
       </div>`;
 
-    el.innerHTML = statsHtml + calHtml + legendHtml + nutriHtml;
+    el.innerHTML = statsHtml + calHtml + legendHtml;
     document.getElementById('monthlyModal').classList.add('open');
   }
 
@@ -1624,10 +1624,7 @@ body {
 
     el.innerHTML = statsHtml + `
       <div style="font-size:13px;font-weight:700;color:var(--peach-dark);margin-bottom:8px;">פירוט השבוע</div>
-      ${dayRows}
-      <div style="margin-top:14px;padding:12px;background:var(--cream);border-radius:12px;font-size:13px;color:var(--text-soft);text-align:center;">
-        ✨ לאחר חיבור Nutri תופיע כאן גם סקירה שבועית חכמה
-      </div>`;
+      ${dayRows}`;
 
     document.getElementById('weeklyModal').classList.add('open');
   }
@@ -2535,7 +2532,7 @@ body {
 <div class="modal-overlay" id="monthlyModal">
   <div class="modal animating" style="max-height:85vh;">
     <div class="modal-handle"></div>
-    <h3>📊 סיכום חודשי</h3>
+    <h3>🧾 סיכום חודשי</h3>
     <div id="monthlyContent" style="overflow-y:auto;max-height:65vh;"></div>
     <button class="modal-save" style="margin-top:16px;" onclick="closeModal('monthlyModal')">סגירה</button>
   </div>
