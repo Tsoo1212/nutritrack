@@ -1047,6 +1047,7 @@ body {
   let mealImageData = null;
   let detailDayMeals = [];
   let historyEntries = [];
+  let currentHistoryIdx = -1;
 
   // Save helpers
   function saveMealsToStorage() {
@@ -1891,7 +1892,7 @@ body {
             </div>
           `).join('')}
         </div>
-      `).join('');
+      `).join('') + '<div style="text-align:center;padding:4px 0 8px;"><button onclick="clearAllHistory()" style="background:none;border:none;font-size:12px;color:#c0392b;cursor:pointer;padding:6px 12px;font-family:\'Heebo\',sans-serif;">🗑️ מחק את כל ההיסטוריה</button></div>';
     }
     document.getElementById('historyModal').classList.add('open');
   }
@@ -1915,7 +1916,49 @@ body {
       <div style="font-size:12px;font-weight:700;color:var(--peach-dark);margin:14px 0 6px;">🏃‍♀️ פעילות גופנית</div>
       ${actsHtml}
     `;
+    currentHistoryIdx = idx;
     document.getElementById('historyDetailModal').classList.add('open');
+  }
+
+  function deleteHistoryEntry() {
+    if (!confirm('למחוק סיכום זה מההיסטוריה?')) return;
+    historyEntries.splice(currentHistoryIdx, 1);
+    localStorage.setItem('nutri_history', JSON.stringify(historyEntries));
+    closeModal('historyDetailModal');
+    // Re-render the history list with updated data
+    const el = document.getElementById('historyContent');
+    if (historyEntries.length === 0) {
+      el.innerHTML = '<p style="color:var(--text-soft);text-align:center;padding:20px;">עדיין אין היסטוריה שמורה.<br>לאחר הסיכום הראשון היא תופיע כאן 😊</p>';
+    } else {
+      const byDate = {};
+      historyEntries.forEach((h, i) => {
+        if (!byDate[h.date]) byDate[h.date] = [];
+        byDate[h.date].push({ ...h, _idx: i });
+      });
+      el.innerHTML = Object.entries(byDate).map(([date, entries]) => `
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px;font-weight:700;color:var(--peach-dark);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">${date}</div>
+          ${entries.map(e => `
+            <div onclick="openHistoryEntry(${e._idx})" style="background:var(--cream);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;display:flex;align-items:flex-start;gap:8px;">
+              <div style="flex:1;">
+                <div style="font-size:12px;color:var(--text-soft);margin-bottom:6px;">${e.type === 'final' ? '🌙 סיכום יומי סופי' : '🕐 סיכום ביניים'}</div>
+                <div style="font-size:13px;color:var(--text);line-height:1.6;">${e.feedback.substring(0, 150)}${e.feedback.length > 150 ? '...' : ''}</div>
+                <div style="font-size:11px;color:var(--text-soft);margin-top:6px;">${e.meals.length} ארוחות · ${e.activities.length} פעילויות</div>
+              </div>
+              <span style="font-size:18px;color:var(--text-soft);align-self:center;flex-shrink:0;">›</span>
+            </div>
+          `).join('')}
+        </div>
+      `).join('') + '<div style="text-align:center;padding-top:4px;"><button onclick="clearAllHistory()" style="background:none;border:none;font-size:12px;color:#c0392b;cursor:pointer;padding:6px 12px;">🗑️ מחק את כל ההיסטוריה</button></div>';
+    }
+  }
+
+  function clearAllHistory() {
+    if (!confirm('למחוק את כל ההיסטוריה לצמיתות?')) return;
+    historyEntries = [];
+    localStorage.removeItem('nutri_history');
+    const el = document.getElementById('historyContent');
+    el.innerHTML = '<p style="color:var(--text-soft);text-align:center;padding:20px;">עדיין אין היסטוריה שמורה.<br>לאחר הסיכום הראשון היא תופיע כאן 😊</p>';
   }
 
   // Render existing data on load
@@ -2873,8 +2916,9 @@ body {
   <div class="modal animating" style="max-height:90vh;">
     <div class="modal-handle"></div>
     <div id="historyDetailTitle" style="font-size:13px;color:var(--text-soft);margin-bottom:12px;font-weight:600;"></div>
-    <div id="historyDetailContent" style="overflow-y:auto;max-height:68vh;"></div>
-    <button class="modal-cancel" onclick="closeModal('historyDetailModal')" style="margin-top:12px;">סגירה</button>
+    <div id="historyDetailContent" style="overflow-y:auto;max-height:62vh;"></div>
+    <button onclick="deleteHistoryEntry()" style="background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:12px;padding:10px;font-size:14px;cursor:pointer;width:100%;margin-top:12px;font-family:'Heebo',sans-serif;">🗑️ מחק סיכום זה</button>
+    <button class="modal-cancel" onclick="closeModal('historyDetailModal')" style="margin-top:8px;">סגירה</button>
   </div>
 </div>
 
