@@ -1743,12 +1743,16 @@ body {
   }
 
   function copyDayToToday(dayMeals, dayActs, label, isRestore) {
-    const msg = isRestore
-      ? `לשחזר את נתוני ${label} ולהחליף את הנתונים הנוכחיים?`
-      : `להעתיק את ארוחות ופעילויות של ${label} למסך הכניסה?\nהנתונים הנוכחיים יוחלפו.`;
-    if (!confirm(msg)) return;
-    meals = JSON.parse(JSON.stringify(dayMeals));
-    activities = JSON.parse(JSON.stringify(dayActs));
+    if (isRestore) {
+      if (!confirm(`לשחזר את נתוני ${label} ולהחליף את כל הנתונים הנוכחיים?`)) return;
+      meals = JSON.parse(JSON.stringify(dayMeals));
+      activities = JSON.parse(JSON.stringify(dayActs));
+    } else {
+      if (!confirm(`להוסיף את ארוחות ופעילויות של ${label} לנתוני היום הנוכחי?`)) return;
+      meals = meals.concat(JSON.parse(JSON.stringify(dayMeals)));
+      activities = activities.concat(JSON.parse(JSON.stringify(dayActs)));
+      meals.sort((a, b) => a.time.localeCompare(b.time));
+    }
     saveMealsToStorage();
     saveActivitiesToStorage();
     renderMeals(false);
