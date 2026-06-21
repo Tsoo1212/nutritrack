@@ -1628,7 +1628,7 @@ body {
       const isEmpty = dayMeals.length === 0 && dayActs.length === 0;
 
       return `
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div onclick="${isEmpty ? '' : `openDayDetail('${dayKey}')`}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);${isEmpty ? '' : 'cursor:pointer;'}">
           <div style="flex:1;">
             <div style="font-size:13px;font-weight:600;color:var(--text);">${label}</div>
             <div style="font-size:12px;color:var(--text-soft);margin-top:2px;">
@@ -1639,6 +1639,7 @@ body {
             ${dayMeals.length > 0 ? '<span style="font-size:16px;">🍽️</span>' : '<span style="font-size:16px;opacity:0.2;">🍽️</span>'}
             ${dayActs.length > 0 ? '<span style="font-size:16px;">🏃‍♀️</span>' : '<span style="font-size:16px;opacity:0.2;">🏃‍♀️</span>'}
             ${hasFinal ? '<span style="font-size:16px;">✅</span>' : '<span style="font-size:16px;opacity:0.2;">✅</span>'}
+            ${isEmpty ? '' : '<span style="font-size:14px;color:var(--text-soft);margin-right:2px;">›</span>'}
           </div>
         </div>`;
     }).join('');
@@ -1692,6 +1693,67 @@ body {
     localStorage.removeItem('nutri_last_cleared');
     renderMeals(false);
     renderActivities(false);
+    closeModal('weeklyModal');
+  }
+
+  function openDayDetail(dayKey) {
+    const allMealsByDay = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
+    const allActsByDay  = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
+    const isToday = dayKey === todayKey;
+    const dayMeals = allMealsByDay[dayKey] || (isToday ? meals : []);
+    const dayActs  = allActsByDay[dayKey]  || (isToday ? activities : []);
+
+    const d = new Date(dayKey);
+    const dayNames   = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+    const monthNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+    const label = `יום ${dayNames[d.getDay()]}, ${d.getDate()} ב${monthNames[d.getMonth()]}`;
+
+    const mealsHtml = dayMeals.length
+      ? dayMeals.map(m => `
+          <div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--peach-light);">
+            <span style="font-size:12px;font-weight:600;color:var(--peach-dark);min-width:40px;">${m.time}</span>
+            <span style="font-size:13px;color:var(--text);">${m.desc}</span>
+          </div>`).join('')
+      : '<p style="color:var(--text-soft);font-size:13px;">אין ארוחות מוזנות</p>';
+
+    const actsHtml = dayActs.length
+      ? dayActs.map(a => `
+          <div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--peach-light);">
+            <span style="font-size:12px;font-weight:600;color:var(--peach-dark);min-width:40px;">${a.time||'–'}</span>
+            <span style="font-size:13px;color:var(--text);">${a.type} · ${a.duration} דק׳ (${a.intensity})</span>
+          </div>`).join('')
+      : '<p style="color:var(--text-soft);font-size:13px;">אין פעילויות מוזנות</p>';
+
+    const canCopy = dayMeals.length > 0 || dayActs.length > 0;
+    document.getElementById('dayDetailTitle').textContent = label;
+    document.getElementById('dayDetailBody').innerHTML = `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--peach-dark);margin-bottom:6px;">🍽️ ארוחות</div>
+        ${mealsHtml}
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="font-size:12px;font-weight:700;color:var(--peach-dark);margin-bottom:6px;">🏃‍♀️ פעילות גופנית</div>
+        ${actsHtml}
+      </div>`;
+    document.getElementById('dayDetailRestore').style.display  = canCopy ? 'block' : 'none';
+    document.getElementById('dayDetailCopy').style.display     = canCopy ? 'block' : 'none';
+    document.getElementById('dayDetailRestore').onclick  = () => copyDayToToday(dayMeals, dayActs, label, true);
+    document.getElementById('dayDetailCopy').onclick     = () => copyDayToToday(dayMeals, dayActs, label, false);
+    document.getElementById('dayDetailModal').classList.add('open');
+  }
+
+  function copyDayToToday(dayMeals, dayActs, label, isRestore) {
+    const msg = isRestore
+      ? `לשחזר את נתוני ${label} ולהחליף את הנתונים הנוכחיים?`
+      : `להעתיק את ארוחות ופעילויות של ${label} למסך הכניסה?\nהנתונים הנוכחיים יוחלפו.`;
+    if (!confirm(msg)) return;
+    meals = JSON.parse(JSON.stringify(dayMeals));
+    activities = JSON.parse(JSON.stringify(dayActs));
+    saveMealsToStorage();
+    saveActivitiesToStorage();
+    renderMeals(false);
+    renderActivities(false);
+    closeModal('dayDetailModal');
     closeModal('weeklyModal');
   }
 
@@ -2634,6 +2696,18 @@ body {
     <h3>📅 סיכום שבועי</h3>
     <div id="weeklyContent" style="overflow-y:auto;max-height:65vh;"></div>
     <button class="modal-save" style="margin-top:16px;" onclick="closeModal('weeklyModal')">סגירה</button>
+  </div>
+</div>
+
+<!-- MODAL: DAY DETAIL -->
+<div class="modal-overlay" id="dayDetailModal">
+  <div class="modal animating" style="max-height:88vh;">
+    <div class="modal-handle"></div>
+    <h3 id="dayDetailTitle"></h3>
+    <div id="dayDetailBody" style="overflow-y:auto;max-height:55vh;margin-bottom:12px;"></div>
+    <button id="dayDetailRestore" class="modal-save" style="background:var(--peach-dark);margin-bottom:8px;display:none;">שחזר יום זה</button>
+    <button id="dayDetailCopy" class="modal-save" style="margin-bottom:8px;display:none;">העתק למסך כניסה</button>
+    <button class="modal-cancel" onclick="closeModal('dayDetailModal')">סגירה</button>
   </div>
 </div>
 
