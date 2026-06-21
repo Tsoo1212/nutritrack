@@ -1046,6 +1046,7 @@ body {
   let editMealIdx = -1, editActivityIdx = -1;
   let mealImageData = null;
   let detailDayMeals = [];
+  let historyEntries = [];
 
   // Save helpers
   function saveMealsToStorage() {
@@ -1867,29 +1868,54 @@ body {
   function openHistory() {
     const history = JSON.parse(localStorage.getItem('nutri_history') || '[]');
     const el = document.getElementById('historyContent');
+    historyEntries = history;
     if (history.length === 0) {
       el.innerHTML = '<p style="color:var(--text-soft);text-align:center;padding:20px;">עדיין אין היסטוריה שמורה.<br>לאחר הסיכום הראשון היא תופיע כאן 😊</p>';
     } else {
-      // Group by date
       const byDate = {};
-      history.forEach(h => {
+      history.forEach((h, i) => {
         if (!byDate[h.date]) byDate[h.date] = [];
-        byDate[h.date].push(h);
+        byDate[h.date].push({ ...h, _idx: i });
       });
       el.innerHTML = Object.entries(byDate).map(([date, entries]) => `
         <div style="margin-bottom:20px;">
           <div style="font-size:13px;font-weight:700;color:var(--peach-dark);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">${date}</div>
           ${entries.map(e => `
-            <div style="background:var(--cream);border-radius:12px;padding:12px;margin-bottom:8px;">
-              <div style="font-size:12px;color:var(--text-soft);margin-bottom:6px;">${e.type === 'final' ? '🌙 סיכום יומי סופי' : '🕐 סיכום ביניים'}</div>
-              <div style="font-size:13px;color:var(--text);line-height:1.6;">${e.feedback.substring(0, 200)}${e.feedback.length > 200 ? '...' : ''}</div>
-              <div style="font-size:11px;color:var(--text-soft);margin-top:6px;">${e.meals.length} ארוחות · ${e.activities.length} פעילויות</div>
+            <div onclick="openHistoryEntry(${e._idx})" style="background:var(--cream);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;display:flex;align-items:flex-start;gap:8px;">
+              <div style="flex:1;">
+                <div style="font-size:12px;color:var(--text-soft);margin-bottom:6px;">${e.type === 'final' ? '🌙 סיכום יומי סופי' : '🕐 סיכום ביניים'}</div>
+                <div style="font-size:13px;color:var(--text);line-height:1.6;">${e.feedback.substring(0, 150)}${e.feedback.length > 150 ? '...' : ''}</div>
+                <div style="font-size:11px;color:var(--text-soft);margin-top:6px;">${e.meals.length} ארוחות · ${e.activities.length} פעילויות</div>
+              </div>
+              <span style="font-size:18px;color:var(--text-soft);align-self:center;flex-shrink:0;">›</span>
             </div>
           `).join('')}
         </div>
       `).join('');
     }
     document.getElementById('historyModal').classList.add('open');
+  }
+
+  function openHistoryEntry(idx) {
+    const e = historyEntries[idx];
+    if (!e) return;
+    const title = e.date + ' · ' + (e.type === 'final' ? '🌙 סיכום יומי סופי' : '🕐 סיכום ביניים');
+    document.getElementById('historyDetailTitle').textContent = title;
+    const mealsHtml = e.meals && e.meals.length
+      ? e.meals.map(m => `<div style="padding:5px 0;font-size:13px;border-bottom:1px solid var(--peach-light);color:var(--text);"><span style="font-weight:600;color:var(--peach-dark);margin-left:8px;">${m.time}</span>${m.desc}</div>`).join('')
+      : '<div style="color:var(--text-soft);font-size:13px;">אין ארוחות</div>';
+    const actsHtml = e.activities && e.activities.length
+      ? e.activities.map(a => `<div style="padding:5px 0;font-size:13px;border-bottom:1px solid var(--peach-light);color:var(--text);"><span style="font-weight:600;color:var(--peach-dark);margin-left:8px;">${a.time||'–'}</span>${a.type} · ${a.duration} דק׳ (${a.intensity})</div>`).join('')
+      : '<div style="color:var(--text-soft);font-size:13px;">אין פעילויות</div>';
+    document.getElementById('historyDetailContent').innerHTML = `
+      <div class="ai-response" style="margin-bottom:16px;">${marked.parse(e.feedback)}</div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:0 0 14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--peach-dark);margin-bottom:6px;">🍽️ ארוחות</div>
+      ${mealsHtml}
+      <div style="font-size:12px;font-weight:700;color:var(--peach-dark);margin:14px 0 6px;">🏃‍♀️ פעילות גופנית</div>
+      ${actsHtml}
+    `;
+    document.getElementById('historyDetailModal').classList.add('open');
   }
 
   // Render existing data on load
@@ -2839,6 +2865,16 @@ body {
     <h3>📖 היסטוריה</h3>
     <div id="historyContent" style="overflow-y:auto;max-height:60vh;"></div>
     <button class="modal-save" style="margin-top:16px;" onclick="closeModal('historyModal')">סגירה</button>
+  </div>
+</div>
+
+<!-- MODAL: HISTORY DETAIL -->
+<div class="modal-overlay" id="historyDetailModal">
+  <div class="modal animating" style="max-height:90vh;">
+    <div class="modal-handle"></div>
+    <div id="historyDetailTitle" style="font-size:13px;color:var(--text-soft);margin-bottom:12px;font-weight:600;"></div>
+    <div id="historyDetailContent" style="overflow-y:auto;max-height:68vh;"></div>
+    <button class="modal-cancel" onclick="closeModal('historyDetailModal')" style="margin-top:12px;">סגירה</button>
   </div>
 </div>
 
