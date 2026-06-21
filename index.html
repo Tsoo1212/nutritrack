@@ -1056,17 +1056,9 @@ body {
     localStorage.setItem('nutri_all_activities', JSON.stringify(allActs));
   }
 
-  // Check if stored data is from today, clear if not
+  // Track current day — data persists until user submits final summary
   const todayKey = new Date().toDateString();
-  const storedDay = localStorage.getItem('nutri_day');
-  if (storedDay !== todayKey) {
-    meals = [];
-    activities = [];
-    localStorage.removeItem('nutri_trend');
-    localStorage.setItem('nutri_day', todayKey);
-    saveMealsToStorage();
-    saveActivitiesToStorage();
-  }
+  localStorage.setItem('nutri_day', todayKey);
 
   const days = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   const months = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
@@ -1672,11 +1664,35 @@ body {
         </div>
       </div>`;
 
-    el.innerHTML = statsHtml + `
+    const lastCleared = JSON.parse(localStorage.getItem('nutri_last_cleared') || 'null');
+    const restoreHtml = lastCleared ? `
+      <div style="margin-bottom:14px;padding:12px 14px;background:#FFF8F0;border:1.5px solid var(--peach-light);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="font-size:13px;color:var(--text);">
+          <div style="font-weight:600;margin-bottom:2px;">שחזור נתונים</div>
+          <div style="font-size:12px;color:var(--text-soft);">${lastCleared.dateStr} – ${lastCleared.meals.length} ארוחות, ${lastCleared.activities.length} פעילויות</div>
+        </div>
+        <button onclick="restoreLastDay()" style="background:var(--peach);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-family:'Heebo',sans-serif;cursor:pointer;flex-shrink:0;">שחזר</button>
+      </div>` : '';
+
+    el.innerHTML = restoreHtml + statsHtml + `
       <div style="font-size:13px;font-weight:700;color:var(--peach-dark);margin-bottom:8px;">פירוט השבוע</div>
       ${dayRows}`;
 
     document.getElementById('weeklyModal').classList.add('open');
+  }
+
+  function restoreLastDay() {
+    const lastCleared = JSON.parse(localStorage.getItem('nutri_last_cleared') || 'null');
+    if (!lastCleared) return;
+    if (!confirm(`לשחזר את הנתונים מ-${lastCleared.dateStr}?\nפעולה זו תחליף את הנתונים הנוכחיים.`)) return;
+    meals = lastCleared.meals;
+    activities = lastCleared.activities;
+    saveMealsToStorage();
+    saveActivitiesToStorage();
+    localStorage.removeItem('nutri_last_cleared');
+    renderMeals(false);
+    renderActivities(false);
+    closeModal('weeklyModal');
   }
 
   function openHistory() {
@@ -2469,6 +2485,22 @@ body {
       if (text) {
         handleSummaryResult(text, contentEl);
         saveFeedbackToHistory('final', lastSummaryText);
+        // Save snapshot for possible restore, then clear current day
+        const snapshot = {
+          dateKey: todayKey,
+          dateStr: new Date().toLocaleDateString('he-IL'),
+          meals: JSON.parse(JSON.stringify(meals)),
+          activities: JSON.parse(JSON.stringify(activities))
+        };
+        localStorage.setItem('nutri_last_cleared', JSON.stringify(snapshot));
+        meals = [];
+        activities = [];
+        localStorage.removeItem('nutri_trend');
+        lastTrend = null;
+        saveMealsToStorage();
+        saveActivitiesToStorage();
+        renderMeals(false);
+        renderActivities(false);
       }
     });
   }
