@@ -538,6 +538,11 @@ body {
 }
 .spring-back { animation: springBack 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
 
+/* QUICK MEAL CHIPS */
+.quick-chip { display:inline-block; background:var(--peach-light); border:1.5px solid var(--peach); border-radius:20px; padding:5px 12px; font-size:13px; color:var(--peach-dark); cursor:pointer; margin-left:6px; white-space:nowrap; -webkit-tap-highlight-color:transparent; user-select:none; }
+.quick-chip:active { opacity:0.7; }
+.quick-chip.manage-chip { background:#f5f5f5; border-color:#ccc; color:var(--text-soft); }
+
 .section-emoji { display: inline-block; }
 
 /* STRIP CARD POP on update */
@@ -841,6 +846,7 @@ body {
       <label class="form-label">מה אכלת? (מצרכים וכמויות)</label>
       <textarea class="form-textarea" id="mealText" placeholder="למשל: 2 ביצים, 2 כפות שמן זית, פרוסת לחם מלא, עגבנייה"></textarea>
     </div>
+    <div id="quickMealsStrip" style="overflow-x:auto;white-space:nowrap;padding:4px 0 6px;-webkit-overflow-scrolling:touch;margin-bottom:2px;"></div>
     <div class="or-div">או</div>
     <div class="form-group">
       <label class="form-label">📸 צילום ערכים תזונתיים (לחטיף / מוצר ארוז)</label>
@@ -1039,6 +1045,7 @@ body {
   let selQty = '', selIntensity = '';
   let editMealIdx = -1, editActivityIdx = -1;
   let mealImageData = null;
+  let detailDayMeals = [];
 
   // Save helpers
   function saveMealsToStorage() {
@@ -1116,6 +1123,7 @@ body {
       document.getElementById('uploadName').textContent = '✅ תמונה קיימת';
     }
     document.querySelectorAll('#mealModal .opt-btn').forEach(b => b.classList.remove('selected'));
+    renderQuickMeals();
     document.getElementById('mealModal').classList.add('open');
   }
 
@@ -1708,11 +1716,13 @@ body {
     const monthNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
     const label = `יום ${dayNames[d.getDay()]}, ${d.getDate()} ב${monthNames[d.getMonth()]}`;
 
+    detailDayMeals = dayMeals;
     const mealsHtml = dayMeals.length
-      ? dayMeals.map(m => `
-          <div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--peach-light);">
-            <span style="font-size:12px;font-weight:600;color:var(--peach-dark);min-width:40px;">${m.time}</span>
-            <span style="font-size:13px;color:var(--text);">${m.desc}</span>
+      ? dayMeals.map((m, i) => `
+          <div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--peach-light);">
+            <span style="font-size:12px;font-weight:600;color:var(--peach-dark);min-width:40px;flex-shrink:0;">${m.time}</span>
+            <span style="font-size:13px;color:var(--text);flex:1;">${m.desc}</span>
+            <button onclick="copySingleMealToToday(${i})" style="background:var(--peach-light);border:1.5px solid var(--peach);border-radius:16px;padding:3px 9px;font-size:12px;color:var(--peach-dark);cursor:pointer;white-space:nowrap;flex-shrink:0;">➕</button>
           </div>`).join('')
       : '<p style="color:var(--text-soft);font-size:13px;">אין ארוחות מוזנות</p>';
 
@@ -1759,6 +1769,99 @@ body {
     renderActivities(false);
     closeModal('dayDetailModal');
     closeModal('weeklyModal');
+  }
+
+  function copySingleMealToToday(idx) {
+    const meal = detailDayMeals[idx];
+    if (!meal) return;
+    meals.push(JSON.parse(JSON.stringify(meal)));
+    meals.sort((a, b) => a.time.localeCompare(b.time));
+    saveMealsToStorage();
+    renderMeals(false);
+    closeModal('dayDetailModal');
+    closeModal('weeklyModal');
+  }
+
+  /* ---- SAVED MEALS ---- */
+  const DEFAULT_SAVED_MEALS = [
+    'קפה עם חלב שקדים', 'גריסים', '2 ביצים', '2 פרוסות לחם מחמצת',
+    '2 חתיכות פרגית', 'מנת טופו', 'סלמון', 'כרעיים',
+    'סלט ירקות', 'יוגורט עם צ׳יה וחצי תפוח'
+  ];
+
+  function getSavedMeals() {
+    const stored = localStorage.getItem('nutri_saved_meals');
+    if (stored !== null) return JSON.parse(stored);
+    localStorage.setItem('nutri_saved_meals', JSON.stringify(DEFAULT_SAVED_MEALS));
+    return DEFAULT_SAVED_MEALS.slice();
+  }
+
+  function setSavedMeals(arr) {
+    localStorage.setItem('nutri_saved_meals', JSON.stringify(arr));
+  }
+
+  function renderQuickMeals() {
+    const strip = document.getElementById('quickMealsStrip');
+    if (!strip) return;
+    const saved = getSavedMeals();
+    strip.innerHTML = saved.map((m, i) =>
+      `<span class="quick-chip" onclick="tapQuickMeal(${i})">${m}</span>`
+    ).join('') + '<span class="quick-chip manage-chip" onclick="openManageSavedMeals()">✏️ ניהול</span>';
+  }
+
+  function tapQuickMeal(idx) {
+    const saved = getSavedMeals();
+    const text = saved[idx];
+    if (!text) return;
+    const ta = document.getElementById('mealText');
+    const cur = ta.value.trim();
+    ta.value = cur ? cur + ', ' + text : text;
+  }
+
+  function openManageSavedMeals() {
+    renderManageSavedList();
+    document.getElementById('newSavedMealInput').value = '';
+    document.getElementById('manageSavedMealsModal').classList.add('open');
+  }
+
+  function renderManageSavedList() {
+    const saved = getSavedMeals();
+    const el = document.getElementById('manageSavedList');
+    if (!el) return;
+    el.innerHTML = saved.map((m, i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="flex:1;font-size:13px;color:var(--text);">${m}</span>
+        <button onclick="editSavedMeal(${i})" style="background:none;border:none;font-size:16px;cursor:pointer;padding:0 2px;">✏️</button>
+        <button onclick="deleteSavedMeal(${i})" style="background:none;border:none;font-size:16px;cursor:pointer;padding:0 2px;">🗑️</button>
+      </div>`).join('') || '<p style="color:var(--text-soft);font-size:13px;text-align:center;padding:12px;">אין ארוחות שמורות</p>';
+  }
+
+  function editSavedMeal(i) {
+    const saved = getSavedMeals();
+    const newVal = prompt('ערכי ארוחה:', saved[i]);
+    if (newVal !== null && newVal.trim()) {
+      saved[i] = newVal.trim();
+      setSavedMeals(saved);
+      renderManageSavedList();
+    }
+  }
+
+  function deleteSavedMeal(i) {
+    const saved = getSavedMeals();
+    saved.splice(i, 1);
+    setSavedMeals(saved);
+    renderManageSavedList();
+  }
+
+  function addSavedMeal() {
+    const input = document.getElementById('newSavedMealInput');
+    const val = input.value.trim();
+    if (!val) return;
+    const saved = getSavedMeals();
+    saved.push(val);
+    setSavedMeals(saved);
+    input.value = '';
+    renderManageSavedList();
   }
 
   function openHistory() {
@@ -2712,6 +2815,20 @@ body {
     <button id="dayDetailRestore" class="modal-save" style="background:var(--peach-dark);margin-bottom:8px;display:none;">שחזר יום זה</button>
     <button id="dayDetailCopy" class="modal-save" style="margin-bottom:8px;display:none;">העתק למסך כניסה</button>
     <button class="modal-cancel" onclick="closeModal('dayDetailModal')">סגירה</button>
+  </div>
+</div>
+
+<!-- MODAL: MANAGE SAVED MEALS -->
+<div class="modal-overlay" id="manageSavedMealsModal">
+  <div class="modal" style="max-height:82vh;">
+    <div class="modal-handle"></div>
+    <h3>ארוחות שמורות ✏️</h3>
+    <div id="manageSavedList" style="overflow-y:auto;max-height:42vh;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+      <input type="text" class="form-input full" id="newSavedMealInput" placeholder="ארוחה חדשה..." style="flex:1;">
+      <button class="modal-save" onclick="addSavedMeal()" style="white-space:nowrap;padding:10px 18px;margin:0;">הוסף</button>
+    </div>
+    <button class="modal-cancel" onclick="closeModal('manageSavedMealsModal'); renderQuickMeals();">סגירה</button>
   </div>
 </div>
 
