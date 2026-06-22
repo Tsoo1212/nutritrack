@@ -1944,12 +1944,10 @@ body {
     section.id = 'historyFollowupSection';
     section.style.cssText = 'margin-top:18px;border-top:1px solid var(--border);padding-top:14px;';
     section.innerHTML = `
-      <div style="font-size:12px;color:var(--peach-dark);font-weight:700;margin-bottom:10px;">💬 שאלי שאלת המשך</div>
+      <div style="font-size:13px;color:var(--peach-dark);font-weight:700;margin-bottom:12px;">💬 שאלי שאלת המשך</div>
       <div id="historyFollowupThread"></div>
-      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">
-        <textarea id="historyFollowupInput" rows="2" class="form-textarea" placeholder="למשל: ספרי לי יותר על ההמלצה הזאת..." style="flex:1;min-height:48px;resize:none;font-size:14px;margin:0;"></textarea>
-        <button onclick="sendHistoryFollowup()" class="modal-save" style="white-space:nowrap;padding:10px 16px;margin:0;flex-shrink:0;">שלחי</button>
-      </div>`;
+      <textarea id="historyFollowupInput" class="form-textarea" placeholder="למשל: ספרי לי יותר על ההמלצה הזאת..." style="min-height:80px;margin-bottom:10px;"></textarea>
+      <button onclick="sendHistoryFollowup()" class="modal-save" style="margin-top:0;">שלחי</button>`;
     content.appendChild(section);
   }
 
@@ -2785,12 +2783,10 @@ body {
     section.id = 'followupSection';
     section.style.cssText = 'margin-top:18px;border-top:1px solid var(--border);padding-top:14px;';
     section.innerHTML = `
-      <div style="font-size:12px;color:var(--peach-dark);font-weight:700;margin-bottom:10px;">💬 שאלי שאלת המשך</div>
+      <div style="font-size:13px;color:var(--peach-dark);font-weight:700;margin-bottom:12px;">💬 שאלי שאלת המשך</div>
       <div id="followupThread"></div>
-      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">
-        <textarea id="followupInput" rows="2" class="form-textarea" placeholder="למשל: איך להכין את זה? כמה כמות מומלצת?" style="flex:1;min-height:48px;resize:none;font-size:14px;margin:0;"></textarea>
-        <button onclick="sendFollowup()" class="modal-save" style="white-space:nowrap;padding:10px 16px;margin:0;flex-shrink:0;">שלחי</button>
-      </div>`;
+      <textarea id="followupInput" class="form-textarea" placeholder="למשל: איך להכין את זה? כמה כמות מומלצת?" style="min-height:80px;margin-bottom:10px;"></textarea>
+      <button onclick="sendFollowup()" class="modal-save" style="margin-top:0;">שלחי</button>`;
     content.appendChild(section);
   }
 
