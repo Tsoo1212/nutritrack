@@ -905,7 +905,7 @@ body {
 
 <!-- MODAL: INTERIM -->
 <div class="modal-overlay" id="interimModal">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;">
     <div class="modal-handle"></div>
     <h3>🕐 סיכום ביניים</h3>
     <div class="summary-content" id="interimContent"></div>
@@ -1048,6 +1048,7 @@ body {
   let detailDayMeals = [];
   let historyEntries = [];
   let currentHistoryIdx = -1;
+  let interimConversation = [];
 
   // Save helpers
   function saveMealsToStorage() {
@@ -2692,6 +2693,9 @@ body {
   }
 
   function openInterim() {
+    interimConversation = [];
+    const existing = document.getElementById('followupSection');
+    if (existing) existing.remove();
     if (meals.length === 0 && activities.length === 0) {
       document.getElementById('interimContent').innerHTML =
         '<p class="placeholder">עדיין לא הוזנו ארוחות או פעילויות. הוסיפי נתונים ואז נוכל לתת לך סיכום ביניים 😊</p>';
@@ -2705,8 +2709,120 @@ body {
       if (text) {
         handleSummaryResult(text, contentEl);
         saveFeedbackToHistory('interim', lastSummaryText);
+        interimConversation = [
+          { role: 'user', content: userMsg },
+          { role: 'assistant', content: lastSummaryText }
+        ];
+        showFollowupUI();
       }
     });
+  }
+
+  function showFollowupUI() {
+    const content = document.getElementById('interimContent');
+    if (!content || document.getElementById('followupSection')) return;
+    const section = document.createElement('div');
+    section.id = 'followupSection';
+    section.style.cssText = 'margin-top:18px;border-top:1px solid var(--border);padding-top:14px;';
+    section.innerHTML = `
+      <div style="font-size:12px;color:var(--peach-dark);font-weight:700;margin-bottom:10px;">💬 שאלי שאלת המשך</div>
+      <div id="followupThread"></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">
+        <textarea id="followupInput" rows="2" class="form-textarea" placeholder="למשל: איך להכין את זה? כמה כמות מומלצת?" style="flex:1;min-height:48px;resize:none;font-size:14px;margin:0;"></textarea>
+        <button onclick="sendFollowup()" class="modal-save" style="white-space:nowrap;padding:10px 16px;margin:0;flex-shrink:0;">שלחי</button>
+      </div>`;
+    content.appendChild(section);
+  }
+
+  async function sendFollowup() {
+    const input = document.getElementById('followupInput');
+    const question = (input.value || '').trim();
+    if (!question) return;
+    input.value = '';
+    const thread = document.getElementById('followupThread');
+
+    // User question bubble
+    const qDiv = document.createElement('div');
+    qDiv.style.cssText = 'background:var(--peach-light);border:1.5px solid var(--peach);border-radius:14px 14px 4px 14px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--text);line-height:1.5;';
+    qDiv.textContent = question;
+    thread.appendChild(qDiv);
+
+    // Loading bubble
+    const aDiv = document.createElement('div');
+    aDiv.style.cssText = 'background:var(--cream);border-radius:14px 14px 14px 4px;padding:10px 14px;margin-bottom:14px;font-size:13px;';
+    aDiv.innerHTML = '<div class="ai-loading" style="padding:2px 0;justify-content:flex-start;gap:8px;"><div class="ai-spinner" style="width:18px;height:18px;border-width:2px;"></div><span style="font-size:13px;">חושבת...</span></div>';
+    thread.appendChild(aDiv);
+
+    // Scroll to show new content
+    const modal = document.getElementById('interimModal').querySelector('.modal');
+    setTimeout(() => { modal.scrollTop = modal.scrollHeight; }, 50);
+
+    interimConversation.push({ role: 'user', content: question });
+    const responseText = await callNutriWithMessages(interimConversation, aDiv);
+    if (responseText) {
+      interimConversation.push({ role: 'assistant', content: responseText });
+      setTimeout(() => { modal.scrollTop = modal.scrollHeight; }, 50);
+    }
+  }
+
+  async function callNutriWithMessages(messages, contentEl) {
+    const apiKey = localStorage.getItem('nutri_api_key');
+    if (!apiKey) {
+      contentEl.innerHTML = '<p style="color:#c0392b;font-size:13px;">❌ נדרש מפתח API</p>';
+      return;
+    }
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          system: buildSystemPrompt(),
+          messages,
+          stream: true
+        })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        contentEl.innerHTML = `<p style="color:#c0392b;font-size:13px;">❌ ${err.error?.message || 'שגיאה'}</p>`;
+        return;
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let inputTokens = 0, outputTokens = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (!raw || raw === '[DONE]') continue;
+          try {
+            const evt = JSON.parse(raw);
+            if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') fullText += evt.delta.text;
+            if (evt.type === 'message_start') inputTokens = evt.message?.usage?.input_tokens || 0;
+            if (evt.type === 'message_delta') outputTokens = evt.usage?.output_tokens || 0;
+          } catch {}
+        }
+      }
+      contentEl.innerHTML = `<div class="ai-response">${marked.parse(fullText)}</div>`;
+      const stored = JSON.parse(localStorage.getItem('nutri_usage') || '{"input":0,"output":0,"calls":0}');
+      stored.input  += inputTokens;
+      stored.output += outputTokens;
+      stored.calls  += 1;
+      localStorage.setItem('nutri_usage', JSON.stringify(stored));
+      return fullText;
+    } catch (e) {
+      contentEl.innerHTML = `<p style="color:#c0392b;font-size:13px;">❌ ${e.message}</p>`;
+    }
   }
 
   function openFinal() {
