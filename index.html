@@ -1049,6 +1049,7 @@ body {
   let historyEntries = [];
   let currentHistoryIdx = -1;
   let interimConversation = [];
+  let historyConversation = [];
 
   // Save helpers
   function saveMealsToStorage() {
@@ -1918,7 +1919,66 @@ body {
       ${actsHtml}
     `;
     currentHistoryIdx = idx;
+    historyConversation = [
+      { role: 'user', content: `${e.type === 'final' ? 'סיכום יומי סופי' : 'סיכום ביניים'} מתאריך ${e.date}.\n\n${formatHistoryEntryForAI(e)}` },
+      { role: 'assistant', content: e.feedback }
+    ];
     document.getElementById('historyDetailModal').classList.add('open');
+    showHistoryFollowupUI();
+  }
+
+  function formatHistoryEntryForAI(e) {
+    const mealLines = e.meals && e.meals.length
+      ? e.meals.map(m => `  ${m.time} – ${m.desc}`).join('\n')
+      : '  (לא הוזנו ארוחות)';
+    const actLines = e.activities && e.activities.length
+      ? e.activities.map(a => `  ${a.time || '?'} – ${a.type}, ${a.duration} דקות, עצימות ${a.intensity}`).join('\n')
+      : '  (לא הוזנה פעילות)';
+    return `ארוחות:\n${mealLines}\n\nפעילות גופנית:\n${actLines}`;
+  }
+
+  function showHistoryFollowupUI() {
+    const content = document.getElementById('historyDetailContent');
+    if (!content || document.getElementById('historyFollowupSection')) return;
+    const section = document.createElement('div');
+    section.id = 'historyFollowupSection';
+    section.style.cssText = 'margin-top:18px;border-top:1px solid var(--border);padding-top:14px;';
+    section.innerHTML = `
+      <div style="font-size:12px;color:var(--peach-dark);font-weight:700;margin-bottom:10px;">💬 שאלי שאלת המשך</div>
+      <div id="historyFollowupThread"></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">
+        <textarea id="historyFollowupInput" rows="2" class="form-textarea" placeholder="למשל: ספרי לי יותר על ההמלצה הזאת..." style="flex:1;min-height:48px;resize:none;font-size:14px;margin:0;"></textarea>
+        <button onclick="sendHistoryFollowup()" class="modal-save" style="white-space:nowrap;padding:10px 16px;margin:0;flex-shrink:0;">שלחי</button>
+      </div>`;
+    content.appendChild(section);
+  }
+
+  async function sendHistoryFollowup() {
+    const input = document.getElementById('historyFollowupInput');
+    const question = (input.value || '').trim();
+    if (!question) return;
+    input.value = '';
+    const thread = document.getElementById('historyFollowupThread');
+
+    const qDiv = document.createElement('div');
+    qDiv.style.cssText = 'background:var(--peach-light);border:1.5px solid var(--peach);border-radius:14px 14px 4px 14px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--text);line-height:1.5;';
+    qDiv.textContent = question;
+    thread.appendChild(qDiv);
+
+    const aDiv = document.createElement('div');
+    aDiv.style.cssText = 'background:var(--cream);border-radius:14px 14px 14px 4px;padding:10px 14px;margin-bottom:14px;font-size:13px;';
+    aDiv.innerHTML = '<div class="ai-loading" style="padding:2px 0;justify-content:flex-start;gap:8px;"><div class="ai-spinner" style="width:18px;height:18px;border-width:2px;"></div><span style="font-size:13px;">חושבת...</span></div>';
+    thread.appendChild(aDiv);
+
+    const modal = document.getElementById('historyDetailModal').querySelector('.modal');
+    setTimeout(() => { modal.scrollTop = modal.scrollHeight; }, 50);
+
+    historyConversation.push({ role: 'user', content: question });
+    const responseText = await callNutriWithMessages(historyConversation, aDiv);
+    if (responseText) {
+      historyConversation.push({ role: 'assistant', content: responseText });
+      setTimeout(() => { modal.scrollTop = modal.scrollHeight; }, 50);
+    }
   }
 
   function deleteHistoryEntry() {
@@ -3029,10 +3089,10 @@ body {
 
 <!-- MODAL: HISTORY DETAIL -->
 <div class="modal-overlay" id="historyDetailModal">
-  <div class="modal animating" style="max-height:90vh;">
+  <div class="modal animating" style="max-height:90vh;overflow-y:auto;">
     <div class="modal-handle"></div>
     <div id="historyDetailTitle" style="font-size:13px;color:var(--text-soft);margin-bottom:12px;font-weight:600;"></div>
-    <div id="historyDetailContent" style="overflow-y:auto;max-height:62vh;"></div>
+    <div id="historyDetailContent"></div>
     <button onclick="deleteHistoryEntry()" style="background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:12px;padding:10px;font-size:14px;cursor:pointer;width:100%;margin-top:12px;font-family:'Heebo',sans-serif;">🗑️ מחק סיכום זה</button>
     <button class="modal-cancel" onclick="closeModal('historyDetailModal')" style="margin-top:8px;">סגירה</button>
   </div>
