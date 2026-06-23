@@ -1025,6 +1025,9 @@ body {
 - בכל המלצת ארוחה להמשך היום – חובה להסביר את המנגנון: "X יאזן את הסוכר כי Y"
 - דוגמה נכונה: "קטניות + ירק ירוק יאטו את ספיגת הסוכר לדם בגלל הסיבים והחלבון, ויעזרו לייצב את הגלוקוז אחרי הספייק של הבוקר"
 
+═══ מוצרים סרוקים ═══
+כשמופיע "מוצר סרוק" ברשימת הארוחות (ללא נתוני תזונה מפורטים): זהו מוצר ארוז שצולם אך נתוניו לא נטענו. התייחס אליו כמנת מזון ארוז סביר. אל תאמר "נתון חסר", "לא נקרא", "אתייחס אליו בצורה חלקית" – פשוט הכלל אותו כחלק מהרשימה עם הערכה מתונה.
+
 ═══ שימוש בבדיקות דם ═══
 - בדיקות הדם הן רקע אישי לכיוון ההמלצות – אין לציין את הערכים המספריים בסיכומים השוטפים
 - כשמוזנות בדיקות דם חדשות, הן מהוות נקודת ייחוס לכיול ההמלצות לגבי סוכר ושאר הפרמטרים
@@ -1065,6 +1068,7 @@ body {
   let editMealIdx = -1, editActivityIdx = -1;
   let mealImageData = null;
   let mealProductAnalysis = null;
+  let analysisInProgress = false;
   let detailDayMeals = [];
   let historyEntries = [];
   let currentHistoryIdx = -1;
@@ -1149,6 +1153,7 @@ body {
     selQty = '';
     mealImageData = null;
     mealProductAnalysis = null;
+    analysisInProgress = false;
     const prevImg = document.getElementById('mealImagePreview');
     if (prevImg) prevImg.remove();
     const ft = document.getElementById('qtyFreeText');
@@ -1221,8 +1226,8 @@ body {
     const apiKey = localStorage.getItem('nutri_api_key');
     if (!apiKey) return;
     mealProductAnalysis = null;
+    analysisInProgress = true;
     const uploadNameEl = document.getElementById('uploadName');
-    const origText = uploadNameEl ? uploadNameEl.textContent : '';
     if (uploadNameEl) uploadNameEl.textContent = '🔍 מנתחת מוצר...';
     try {
       const base64 = imageData.split(',')[1];
@@ -1248,8 +1253,9 @@ body {
         const data = await resp.json();
         mealProductAnalysis = data.content?.[0]?.text?.trim() || null;
       }
-    } catch(e) { /* silent fail — will fall back to "מוצר סרוק" */ }
-    if (uploadNameEl) uploadNameEl.textContent = mealProductAnalysis ? '✅ מוצר זוהה' : origText;
+    } catch(e) { /* silent fail */ }
+    analysisInProgress = false;
+    if (uploadNameEl) uploadNameEl.textContent = mealProductAnalysis ? '✅ מוצר זוהה' : '✅ תמונה הועלתה';
   }
 
   function saveMeal() {
@@ -1257,7 +1263,8 @@ body {
     const text = document.getElementById('mealText').value.trim();
     const uploaded = document.getElementById('uploadName').textContent;
     if (!time) { alert('נא לבחור שעה'); return; }
-    if (!text && !uploaded) { alert('נא להזין מצרכים או להעלות צילום'); return; }
+    if (!text && !mealImageData) { alert('נא להזין מצרכים או להעלות צילום'); return; }
+    if (analysisInProgress) { alert('ממתינה לסיום ניתוח המוצר... נסי שוב בעוד שנייה'); return; }
     const qtyFreeVal = (document.getElementById('qtyFreeText') || {}).value?.trim() || '';
     const effectiveQty = qtyFreeVal || selQty;
     let desc = text;
@@ -1278,6 +1285,7 @@ body {
     selQty = '';
     mealImageData = null;
     mealProductAnalysis = null;
+    analysisInProgress = false;
   }
 
   function deleteMeal(idx) {
