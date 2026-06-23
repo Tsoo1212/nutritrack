@@ -1069,6 +1069,7 @@ body {
   let mealImageData = null;
   let mealProductAnalysis = null;
   let analysisInProgress = false;
+  let mealImageChanged = false;
   let detailDayMeals = [];
   let historyEntries = [];
   let currentHistoryIdx = -1;
@@ -1141,7 +1142,8 @@ body {
     if (editMealIdx >= 0) {
       const m = meals[editMealIdx];
       document.getElementById('mealTime').value = m.time;
-      document.getElementById('mealText').value = m.desc;
+      // Show only the user-typed text, not the auto-generated product description
+      document.getElementById('mealText').value = m.userText !== undefined ? m.userText : (m.image ? '' : m.desc);
     } else {
       document.getElementById('mealTime').value = nowTime();
       document.getElementById('mealText').value = '';
@@ -1154,6 +1156,7 @@ body {
     mealImageData = null;
     mealProductAnalysis = null;
     analysisInProgress = false;
+    mealImageChanged = false;
     const prevImg = document.getElementById('mealImagePreview');
     if (prevImg) prevImg.remove();
     const ft = document.getElementById('qtyFreeText');
@@ -1167,13 +1170,19 @@ body {
     const togBtn = document.getElementById('savedProdToggle');
     if (togBtn) togBtn.classList.remove('selected');
     if (editMealIdx >= 0 && meals[editMealIdx].image) {
-      mealImageData = meals[editMealIdx].image;
+      const m = meals[editMealIdx];
+      mealImageData = m.image;
+      mealProductAnalysis = m.analysis || null;
+      const productName = m.analysis?.name || null;
       const img = document.createElement('img');
       img.id = 'mealImagePreview';
       img.style.cssText = 'width:100%;border-radius:10px;margin-top:8px;object-fit:contain;max-height:160px;';
       img.src = mealImageData;
       document.getElementById('uploadName').after(img);
-      document.getElementById('uploadName').textContent = '✅ תמונה קיימת';
+      document.getElementById('uploadName').textContent = productName ? `✅ ${productName}` : '✅ תמונה קיימת';
+      if (m.productDesc) {
+        document.getElementById('qtySection').style.display = 'block';
+      }
     }
     document.querySelectorAll('#mealModal .opt-btn').forEach(b => b.classList.remove('selected'));
     renderQuickMeals();
@@ -1201,6 +1210,7 @@ body {
   function handleUpload(input) {
     if (input.files && input.files[0]) {
       const file = input.files[0];
+      mealImageChanged = true;
       document.getElementById('uploadName').textContent = '✅ ' + file.name;
       document.getElementById('qtySection').style.display = 'block';
       const reader = new FileReader();
@@ -1303,21 +1313,33 @@ body {
 
   function saveMeal() {
     const time = document.getElementById('mealTime').value;
-    const text = document.getElementById('mealText').value.trim();
-    const uploaded = document.getElementById('uploadName').textContent;
+    const userText = document.getElementById('mealText').value.trim();
+    const existingMeal = editMealIdx >= 0 ? meals[editMealIdx] : null;
+    const hasImage = mealImageData || (existingMeal?.image && !mealImageChanged);
     if (!time) { alert('נא לבחור שעה'); return; }
-    if (!text && !mealImageData) { alert('נא להזין מצרכים או להעלות צילום'); return; }
+    if (!userText && !hasImage) { alert('נא להזין מצרכים או להעלות צילום'); return; }
     if (analysisInProgress) { alert('ממתינה לסיום ניתוח המוצר... נסי שוב בעוד שנייה'); return; }
     const qtyFreeVal = (document.getElementById('qtyFreeText') || {}).value?.trim() || '';
     const effectiveQty = qtyFreeVal || selQty;
-    let desc = text;
-    if (mealImageData) {
-      desc += (desc ? ' + ' : '') + buildProductDesc(mealProductAnalysis, effectiveQty);
+
+    // Determine the product description part (from scan)
+    let productDesc = '';
+    if (mealImageChanged) {
+      // New image uploaded — build fresh product desc
+      productDesc = buildProductDesc(mealProductAnalysis, effectiveQty);
+    } else if (existingMeal?.image) {
+      // Image unchanged during edit — reuse stored product desc
+      productDesc = existingMeal.productDesc || '';
     }
+
+    const desc = userText + (productDesc ? (userText ? ' + ' : '') + productDesc : '');
+    const image = mealImageChanged ? mealImageData : (existingMeal?.image || null);
+    const analysis = mealImageChanged ? mealProductAnalysis : (existingMeal?.analysis || null);
+
     if (editMealIdx >= 0) {
-      meals[editMealIdx] = { time, desc, image: mealImageData || meals[editMealIdx].image || null };
+      meals[editMealIdx] = { time, desc, userText, productDesc, image, analysis };
     } else {
-      meals.push({ time, desc, image: mealImageData || null });
+      meals.push({ time, desc, userText, productDesc, image, analysis });
     }
     editMealIdx = -1;
     meals.sort((a,b) => a.time.localeCompare(b.time));
@@ -1328,6 +1350,7 @@ body {
     mealImageData = null;
     mealProductAnalysis = null;
     analysisInProgress = false;
+    mealImageChanged = false;
   }
 
   function deleteMeal(idx) {
@@ -2077,6 +2100,7 @@ body {
     const p = products[idx];
     if (!p) return;
     mealImageData = p.image;
+    mealImageChanged = true;
     // Use stored analysis only if it's the structured JSON format
     const storedAnalysis = (p.analysis && typeof p.analysis === 'object') ? p.analysis : null;
     mealProductAnalysis = storedAnalysis;
