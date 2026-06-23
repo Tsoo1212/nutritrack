@@ -1222,6 +1222,16 @@ body {
     }
   }
 
+  function parseAnalysisJSON(raw) {
+    if (!raw) return null;
+    // Strip markdown code fences if present
+    const stripped = raw.replace(/^```[\w]*\n?/,'').replace(/\n?```$/,'').trim();
+    // Extract first {...} block in case there is surrounding text
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try { return JSON.parse(match[0]); } catch { return null; }
+  }
+
   async function analyzeProductImage(imageData) {
     const apiKey = localStorage.getItem('nutri_api_key');
     if (!apiKey) return;
@@ -1245,15 +1255,14 @@ body {
           max_tokens: 200,
           messages: [{ role: 'user', content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: 'זו תווית מזון. החזר JSON בלבד, ללא שום טקסט נוסף:\n{"name":"שם המוצר בעברית","serving_g":גרמים_למנה_כמספר_או_null,"cal":קלוריות_למנה,"prot":גרם_חלבון,"fat":גרם_שומן,"carbs":גרם_פחמימות}\nאם ערך לא נמצא – null.' }
+            { type: 'text', text: 'תווית מזון / מוצר ארוז. החזר JSON בלבד (ללא markdown, ללא הסבר):\n{"name":"שם המוצר כפי שמופיע","serving_g":גרמים_למנה_כמספר_או_null,"cal":קלוריות_למנה,"prot":גרם_חלבון,"fat":גרם_שומן,"carbs":גרם_פחמימות}\nאם ערכים לפי 100ג ולא מנה – תמיר למנה הגיונית. ערך שלא ניתן לקרוא – null.' }
           ]}]
         })
       });
       if (resp.ok) {
         const data = await resp.json();
         const raw = data.content?.[0]?.text?.trim() || '';
-        try { mealProductAnalysis = JSON.parse(raw); }
-        catch { mealProductAnalysis = raw || null; }
+        mealProductAnalysis = parseAnalysisJSON(raw) || raw || null;
       }
     } catch(e) { /* silent fail */ }
     analysisInProgress = false;
@@ -2068,7 +2077,9 @@ body {
     const p = products[idx];
     if (!p) return;
     mealImageData = p.image;
-    mealProductAnalysis = p.analysis || null;
+    // Use stored analysis only if it's the structured JSON format
+    const storedAnalysis = (p.analysis && typeof p.analysis === 'object') ? p.analysis : null;
+    mealProductAnalysis = storedAnalysis;
     document.getElementById('uploadName').textContent = '✅ ' + p.name;
     document.getElementById('qtySection').style.display = 'block';
     let prev = document.getElementById('mealImagePreview');
@@ -2079,6 +2090,18 @@ body {
       document.getElementById('uploadName').after(prev);
     }
     prev.src = p.image;
+    // If no structured analysis, analyze now and cache result back into saved product
+    if (!storedAnalysis) {
+      analyzeProductImage(p.image).then(() => {
+        if (mealProductAnalysis && typeof mealProductAnalysis === 'object') {
+          const prods = getSavedProducts();
+          if (prods[idx] && prods[idx].name === p.name) {
+            prods[idx].analysis = mealProductAnalysis;
+            setSavedProducts(prods);
+          }
+        }
+      });
+    }
   }
 
   function showSaveProductNameBox() {
