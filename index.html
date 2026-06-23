@@ -1242,20 +1242,54 @@ body {
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 150,
+          max_tokens: 200,
           messages: [{ role: 'user', content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: 'זו תווית מזון. תן בעברית: שם המוצר + ערכים תזונתיים עיקריים למנה (קלוריות, חלבון, שומן, פחמימות). עד שורה אחת, בתמצות.' }
+            { type: 'text', text: 'זו תווית מזון. החזר JSON בלבד, ללא שום טקסט נוסף:\n{"name":"שם המוצר בעברית","serving_g":גרמים_למנה_כמספר_או_null,"cal":קלוריות_למנה,"prot":גרם_חלבון,"fat":גרם_שומן,"carbs":גרם_פחמימות}\nאם ערך לא נמצא – null.' }
           ]}]
         })
       });
       if (resp.ok) {
         const data = await resp.json();
-        mealProductAnalysis = data.content?.[0]?.text?.trim() || null;
+        const raw = data.content?.[0]?.text?.trim() || '';
+        try { mealProductAnalysis = JSON.parse(raw); }
+        catch { mealProductAnalysis = raw || null; }
       }
     } catch(e) { /* silent fail */ }
     analysisInProgress = false;
-    if (uploadNameEl) uploadNameEl.textContent = mealProductAnalysis ? '✅ מוצר זוהה' : '✅ תמונה הועלתה';
+    const pName = mealProductAnalysis?.name || (typeof mealProductAnalysis === 'string' && mealProductAnalysis);
+    if (uploadNameEl) uploadNameEl.textContent = pName ? `✅ ${pName}` : '✅ תמונה הועלתה';
+  }
+
+  function buildProductDesc(analysis, qty) {
+    if (!analysis) return 'מוצר ארוז' + (qty ? ` (${qty})` : '');
+    // Plain-text fallback (old format or parse failure)
+    if (typeof analysis === 'string') return analysis + (qty ? ` (${qty})` : '');
+    // Structured JSON
+    const p = analysis;
+    const name = p.name || 'מוצר ארוז';
+    // Determine multiplier from qty
+    let multiplier = 1;
+    if (qty === '¼') multiplier = 0.25;
+    else if (qty === '½') multiplier = 0.5;
+    else if (qty === '¾') multiplier = 0.75;
+    else if (qty === 'הכל' || !qty) multiplier = 1;
+    else if (p.serving_g) {
+      // Free-text like "200 גרם" — compute ratio vs serving
+      const grams = parseFloat(qty);
+      if (!isNaN(grams)) multiplier = grams / p.serving_g;
+    }
+    const r = n => n != null ? Math.round(n * multiplier * 10) / 10 : null;
+    const nutr = [
+      p.cal  != null ? `${Math.round(p.cal * multiplier)} קק"ל` : null,
+      r(p.prot)  != null ? `${r(p.prot)}ג חלבון`  : null,
+      r(p.fat)   != null ? `${r(p.fat)}ג שומן`    : null,
+      r(p.carbs) != null ? `${r(p.carbs)}ג פחמימות` : null,
+    ].filter(Boolean);
+    const qtyLabel = qty && qty !== 'הכל' ? `${qty} מנה` : 'מנה שלמה';
+    return nutr.length
+      ? `${name} (${qtyLabel}: ${nutr.join(', ')})`
+      : name + (qty ? ` (${qty})` : '');
   }
 
   function saveMeal() {
@@ -1268,9 +1302,8 @@ body {
     const qtyFreeVal = (document.getElementById('qtyFreeText') || {}).value?.trim() || '';
     const effectiveQty = qtyFreeVal || selQty;
     let desc = text;
-    if (uploaded) {
-      const productLabel = mealProductAnalysis || 'מוצר סרוק';
-      desc += (desc ? ' + ' : '') + productLabel + (effectiveQty ? ` (${effectiveQty})` : '');
+    if (mealImageData) {
+      desc += (desc ? ' + ' : '') + buildProductDesc(mealProductAnalysis, effectiveQty);
     }
     if (editMealIdx >= 0) {
       meals[editMealIdx] = { time, desc, image: mealImageData || meals[editMealIdx].image || null };
@@ -2035,7 +2068,7 @@ body {
     const p = products[idx];
     if (!p) return;
     mealImageData = p.image;
-    mealProductAnalysis = p.analysis || p.name;
+    mealProductAnalysis = p.analysis || null;
     document.getElementById('uploadName').textContent = '✅ ' + p.name;
     document.getElementById('qtySection').style.display = 'block';
     let prev = document.getElementById('mealImagePreview');
