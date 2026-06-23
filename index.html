@@ -870,7 +870,11 @@ body {
           <button class="opt-btn" onclick="selectOpt(this,'qty','הכל')">הכל</button>
         </div>
         <input type="text" id="qtyFreeText" class="form-input full" placeholder="או כמות חופשית: 3 חתיכות, 200 גרם..." style="margin-top:8px;" oninput="if(this.value){selQty='';document.querySelectorAll('#qtySection .opt-btn').forEach(b=>b.classList.remove('selected'));}">
-        <button id="saveProductBtn" onclick="promptSaveProduct()" style="margin-top:10px;background:none;border:1.5px solid var(--peach);color:var(--peach-dark);border-radius:20px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:'Heebo',sans-serif;">📌 שמור מוצר לשימוש עתידי</button>
+        <button id="saveProductBtn" onclick="showSaveProductNameBox()" style="margin-top:10px;background:none;border:1.5px solid var(--peach);color:var(--peach-dark);border-radius:20px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:'Heebo',sans-serif;">📌 שמור מוצר לשימוש עתידי</button>
+        <div id="saveProductNameBox" style="display:none;margin-top:8px;">
+          <input type="text" id="saveProductNameInput" class="form-input full" placeholder="שם המוצר (למשל: חטיף בריא)...">
+          <button onclick="confirmSaveProduct()" class="modal-save" style="margin-top:6px;padding:8px 20px;width:100%;">שמור</button>
+        </div>
       </div>
     </div>
     <button class="modal-save" onclick="pulseBtn(this); saveMeal()">שמירה</button>
@@ -1068,10 +1072,14 @@ body {
 
   // Save helpers
   function saveMealsToStorage() {
-    try { localStorage.setItem('nutri_meals', JSON.stringify(meals)); } catch(e) {}
+    try {
+      localStorage.setItem('nutri_meals', JSON.stringify(meals));
+    } catch(e) {
+      // Image data too large — save without images so at least meal entries persist
+      try { localStorage.setItem('nutri_meals', JSON.stringify(meals.map(m => ({ time: m.time, desc: m.desc })))); } catch(e2) {}
+    }
     try {
       const allMeals = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
-      // Strip images before saving to history to avoid quota overflow
       allMeals[new Date().toDateString()] = meals.map(m => ({ time: m.time, desc: m.desc }));
       localStorage.setItem('nutri_all_meals', JSON.stringify(allMeals));
     } catch(e) {}
@@ -1143,6 +1151,10 @@ body {
     if (prevImg) prevImg.remove();
     const ft = document.getElementById('qtyFreeText');
     if (ft) ft.value = '';
+    const nameBox = document.getElementById('saveProductNameBox');
+    if (nameBox) nameBox.style.display = 'none';
+    const nameInp = document.getElementById('saveProductNameInput');
+    if (nameInp) nameInp.value = '';
     const strip = document.getElementById('savedProductsStrip');
     if (strip) strip.style.display = 'none';
     const togBtn = document.getElementById('savedProdToggle');
@@ -1909,12 +1921,13 @@ body {
   }
 
   function setSavedProducts(arr) {
-    try {
-      localStorage.setItem('nutri_saved_products', JSON.stringify(arr));
-    } catch(e) {
-      // localStorage full — remove oldest and retry
-      arr.pop();
-      localStorage.setItem('nutri_saved_products', JSON.stringify(arr));
+    while (arr.length > 0) {
+      try {
+        localStorage.setItem('nutri_saved_products', JSON.stringify(arr));
+        return;
+      } catch(e) {
+        arr.pop(); // remove oldest, retry
+      }
     }
   }
 
@@ -1965,17 +1978,34 @@ body {
     prev.src = p.image;
   }
 
-  function promptSaveProduct() {
+  function showSaveProductNameBox() {
     if (!mealImageData) return;
-    const name = prompt('שם המוצר (יופיע בפעם הבאה):', '');
-    if (!name || !name.trim()) return;
+    const box = document.getElementById('saveProductNameBox');
+    if (!box) return;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') {
+      const inp = document.getElementById('saveProductNameInput');
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
+  }
+
+  function confirmSaveProduct() {
+    if (!mealImageData) return;
+    const inp = document.getElementById('saveProductNameInput');
+    const name = inp ? inp.value.trim() : '';
+    if (!name) { if (inp) inp.focus(); return; }
     const products = getSavedProducts();
-    products.unshift({ name: name.trim(), image: mealImageData, savedAt: Date.now() });
+    products.unshift({ name, image: mealImageData, savedAt: Date.now() });
     if (products.length > 6) products.length = 6;
     setSavedProducts(products);
     renderSavedProducts();
-    document.getElementById('saveProductBtn').textContent = '✅ נשמר!';
-    setTimeout(() => { document.getElementById('saveProductBtn').textContent = '📌 שמור מוצר לשימוש עתידי'; }, 2000);
+    const box = document.getElementById('saveProductNameBox');
+    if (box) box.style.display = 'none';
+    const btn = document.getElementById('saveProductBtn');
+    if (btn) {
+      btn.textContent = '✅ נשמר!';
+      setTimeout(() => { btn.textContent = '📌 שמור מוצר לשימוש עתידי'; }, 2000);
+    }
   }
 
   function openManageSavedProducts() {
