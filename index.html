@@ -1065,18 +1065,21 @@ body {
 
   // Save helpers
   function saveMealsToStorage() {
-    localStorage.setItem('nutri_meals', JSON.stringify(meals));
-    // Save to all-time meals by day
-    const allMeals = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
-    allMeals[new Date().toDateString()] = meals;
-    localStorage.setItem('nutri_all_meals', JSON.stringify(allMeals));
+    try { localStorage.setItem('nutri_meals', JSON.stringify(meals)); } catch(e) {}
+    try {
+      const allMeals = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
+      // Strip images before saving to history to avoid quota overflow
+      allMeals[new Date().toDateString()] = meals.map(m => ({ time: m.time, desc: m.desc }));
+      localStorage.setItem('nutri_all_meals', JSON.stringify(allMeals));
+    } catch(e) {}
   }
   function saveActivitiesToStorage() {
-    localStorage.setItem('nutri_activities', JSON.stringify(activities));
-    // Save to all-time activities by day
-    const allActs = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
-    allActs[new Date().toDateString()] = activities;
-    localStorage.setItem('nutri_all_activities', JSON.stringify(allActs));
+    try { localStorage.setItem('nutri_activities', JSON.stringify(activities)); } catch(e) {}
+    try {
+      const allActs = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
+      allActs[new Date().toDateString()] = activities;
+      localStorage.setItem('nutri_all_activities', JSON.stringify(allActs));
+    } catch(e) {}
   }
 
   // Track current day — data persists until user submits final summary
@@ -1185,6 +1188,8 @@ body {
     saveMealsToStorage();
     renderMeals(true);
     closeModal('mealModal');
+    selQty = '';
+    mealImageData = null;
   }
 
   function deleteMeal(idx) {
