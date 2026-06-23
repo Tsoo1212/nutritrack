@@ -1064,6 +1064,7 @@ body {
   let selQty = '', selIntensity = '';
   let editMealIdx = -1, editActivityIdx = -1;
   let mealImageData = null;
+  let mealProductAnalysis = null;
   let detailDayMeals = [];
   let historyEntries = [];
   let currentHistoryIdx = -1;
@@ -1147,6 +1148,7 @@ body {
     if (spBtn) spBtn.textContent = '📌 שמור מוצר לשימוש עתידי';
     selQty = '';
     mealImageData = null;
+    mealProductAnalysis = null;
     const prevImg = document.getElementById('mealImagePreview');
     if (prevImg) prevImg.remove();
     const ft = document.getElementById('qtyFreeText');
@@ -1208,10 +1210,46 @@ body {
             document.getElementById('uploadName').after(prev);
           }
           prev.src = mealImageData;
+          analyzeProductImage(mealImageData);
         });
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  async function analyzeProductImage(imageData) {
+    const apiKey = localStorage.getItem('nutri_api_key');
+    if (!apiKey) return;
+    mealProductAnalysis = null;
+    const uploadNameEl = document.getElementById('uploadName');
+    const origText = uploadNameEl ? uploadNameEl.textContent : '';
+    if (uploadNameEl) uploadNameEl.textContent = '🔍 מנתחת מוצר...';
+    try {
+      const base64 = imageData.split(',')[1];
+      const mediaType = imageData.split(';')[0].split(':')[1] || 'image/jpeg';
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 150,
+          messages: [{ role: 'user', content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: 'זו תווית מזון. תן בעברית: שם המוצר + ערכים תזונתיים עיקריים למנה (קלוריות, חלבון, שומן, פחמימות). עד שורה אחת, בתמצות.' }
+          ]}]
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        mealProductAnalysis = data.content?.[0]?.text?.trim() || null;
+      }
+    } catch(e) { /* silent fail — will fall back to "מוצר סרוק" */ }
+    if (uploadNameEl) uploadNameEl.textContent = mealProductAnalysis ? '✅ מוצר זוהה' : origText;
   }
 
   function saveMeal() {
@@ -1223,7 +1261,10 @@ body {
     const qtyFreeVal = (document.getElementById('qtyFreeText') || {}).value?.trim() || '';
     const effectiveQty = qtyFreeVal || selQty;
     let desc = text;
-    if (uploaded) desc += (desc ? ' + ' : '') + `מוצר סרוק${effectiveQty ? ' (' + effectiveQty + ')' : ''}`;
+    if (uploaded) {
+      const productLabel = mealProductAnalysis || 'מוצר סרוק';
+      desc += (desc ? ' + ' : '') + productLabel + (effectiveQty ? ` (${effectiveQty})` : '');
+    }
     if (editMealIdx >= 0) {
       meals[editMealIdx] = { time, desc, image: mealImageData || meals[editMealIdx].image || null };
     } else {
@@ -1236,6 +1277,7 @@ body {
     closeModal('mealModal');
     selQty = '';
     mealImageData = null;
+    mealProductAnalysis = null;
   }
 
   function deleteMeal(idx) {
@@ -1985,6 +2027,7 @@ body {
     const p = products[idx];
     if (!p) return;
     mealImageData = p.image;
+    mealProductAnalysis = p.analysis || p.name;
     document.getElementById('uploadName').textContent = '✅ ' + p.name;
     document.getElementById('qtySection').style.display = 'block';
     let prev = document.getElementById('mealImagePreview');
@@ -2014,7 +2057,7 @@ body {
     const name = inp ? inp.value.trim() : '';
     if (!name) { if (inp) inp.focus(); return; }
     const products = getSavedProducts();
-    products.unshift({ name, image: mealImageData, savedAt: Date.now() });
+    products.unshift({ name, image: mealImageData, analysis: mealProductAnalysis || null, savedAt: Date.now() });
     if (products.length > 6) products.length = 6;
     setSavedProducts(products);
     renderSavedProducts();
