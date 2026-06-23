@@ -850,12 +850,14 @@ body {
     <div class="or-div">או</div>
     <div class="form-group">
       <label class="form-label">📸 צילום ערכים תזונתיים (לחטיף / מוצר ארוז)</label>
-      <div id="savedProductsStrip" style="display:none;overflow-x:auto;white-space:nowrap;padding:0 0 10px;-webkit-overflow-scrolling:touch;"></div>
-      <div class="upload-area" onclick="document.getElementById('nutritionFile').click()">
-        <div class="upload-icon">📷</div>
-        לחצי להעלאת צילום מסך או תמונה
-        <input type="file" id="nutritionFile" accept="image/*" style="display:none" onchange="handleUpload(this)">
+      <div class="opts" style="margin-bottom:10px;">
+        <button class="opt-btn" onclick="document.getElementById('cameraFile').click()" style="flex:1;">📷 צלמי</button>
+        <button class="opt-btn" onclick="document.getElementById('galleryFile').click()" style="flex:1;">🖼️ גלריה</button>
+        <button class="opt-btn" id="savedProdToggle" onclick="toggleSavedProductsStrip()" style="flex:1;">📦 שמורים</button>
       </div>
+      <input type="file" id="cameraFile" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this)">
+      <input type="file" id="galleryFile" accept="image/*" style="display:none" onchange="handleUpload(this)">
+      <div id="savedProductsStrip" style="display:none;overflow-x:auto;white-space:nowrap;padding:6px 0 10px;-webkit-overflow-scrolling:touch;"></div>
       <div class="upload-confirm" id="uploadName"></div>
     </div>
     <div id="qtySection" style="display:none;">
@@ -867,6 +869,7 @@ body {
           <button class="opt-btn" onclick="selectOpt(this,'qty','¾')">¾</button>
           <button class="opt-btn" onclick="selectOpt(this,'qty','הכל')">הכל</button>
         </div>
+        <input type="text" id="qtyFreeText" class="form-input full" placeholder="או כמות חופשית: 3 חתיכות, 200 גרם..." style="margin-top:8px;" oninput="if(this.value){selQty='';document.querySelectorAll('#qtySection .opt-btn').forEach(b=>b.classList.remove('selected'));}">
         <button id="saveProductBtn" onclick="promptSaveProduct()" style="margin-top:10px;background:none;border:1.5px solid var(--peach);color:var(--peach-dark);border-radius:20px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:'Heebo',sans-serif;">📌 שמור מוצר לשימוש עתידי</button>
       </div>
     </div>
@@ -1107,7 +1110,11 @@ body {
   });
 
   function selectOpt(btn, group, val) {
-    if (group === 'qty') selQty = val;
+    if (group === 'qty') {
+      selQty = val;
+      const ft = document.getElementById('qtyFreeText');
+      if (ft) ft.value = '';
+    }
     if (group === 'intensity') selIntensity = val;
     const parent = btn.closest('.opts');
     parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
@@ -1134,6 +1141,12 @@ body {
     mealImageData = null;
     const prevImg = document.getElementById('mealImagePreview');
     if (prevImg) prevImg.remove();
+    const ft = document.getElementById('qtyFreeText');
+    if (ft) ft.value = '';
+    const strip = document.getElementById('savedProductsStrip');
+    if (strip) strip.style.display = 'none';
+    const togBtn = document.getElementById('savedProdToggle');
+    if (togBtn) togBtn.classList.remove('selected');
     if (editMealIdx >= 0 && meals[editMealIdx].image) {
       mealImageData = meals[editMealIdx].image;
       const img = document.createElement('img');
@@ -1176,8 +1189,10 @@ body {
     const uploaded = document.getElementById('uploadName').textContent;
     if (!time) { alert('נא לבחור שעה'); return; }
     if (!text && !uploaded) { alert('נא להזין מצרכים או להעלות צילום'); return; }
+    const qtyFreeVal = (document.getElementById('qtyFreeText') || {}).value?.trim() || '';
+    const effectiveQty = qtyFreeVal || selQty;
     let desc = text;
-    if (uploaded) desc += (desc ? ' + ' : '') + `מוצר סרוק${selQty ? ' (' + selQty + ')' : ''}`;
+    if (uploaded) desc += (desc ? ' + ' : '') + `מוצר סרוק${effectiveQty ? ' (' + effectiveQty + ')' : ''}`;
     if (editMealIdx >= 0) {
       meals[editMealIdx] = { time, desc, image: mealImageData || meals[editMealIdx].image || null };
     } else {
@@ -1903,12 +1918,25 @@ body {
     }
   }
 
+  function toggleSavedProductsStrip() {
+    const strip = document.getElementById('savedProductsStrip');
+    const btn = document.getElementById('savedProdToggle');
+    if (!strip) return;
+    const products = getSavedProducts();
+    if (products.length === 0) {
+      alert('אין מוצרים שמורים עדיין. צלמי מוצר ולחצי "שמור מוצר לשימוש עתידי".');
+      return;
+    }
+    const isOpen = strip.style.display !== 'none';
+    strip.style.display = isOpen ? 'none' : 'block';
+    if (btn) btn.classList.toggle('selected', !isOpen);
+  }
+
   function renderSavedProducts() {
     const strip = document.getElementById('savedProductsStrip');
     if (!strip) return;
     const products = getSavedProducts();
     if (products.length === 0) { strip.style.display = 'none'; return; }
-    strip.style.display = 'block';
     strip.innerHTML = products.map((p, i) => `
       <span onclick="loadSavedProduct(${i})" style="display:inline-flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;margin-left:10px;vertical-align:top;width:60px;">
         <img src="${p.image}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;border:2px solid var(--peach);">
