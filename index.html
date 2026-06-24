@@ -3367,7 +3367,7 @@ body {
       if (text) {
         handleSummaryResult(text, contentEl);
         saveFeedbackToHistory('final', lastSummaryText);
-        if (lastTrend === 'up') setTimeout(() => awardDailyTrophy(), 3200);
+        if (lastTrend === 'up') setTimeout(() => awardDailyTrophy(), 300);
         // Save snapshot for possible restore, then clear current day
         const snapshot = {
           dateKey: todayKey,
