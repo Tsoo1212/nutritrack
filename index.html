@@ -1679,6 +1679,7 @@ body {
     const allMealsByDay = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
     const allActsByDay = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
     const history = JSON.parse(localStorage.getItem('nutri_history') || '[]');
+    const achievements = getAchievements();
 
     const today = new Date();
     const monthNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
@@ -1768,6 +1769,8 @@ body {
       const dayMeals = allMealsByDay[dayKey] || (dayKey === today.toDateString() ? meals : []);
       const dayActs = allActsByDay[dayKey] || (dayKey === today.toDateString() ? activities : []);
       const hasFinal = history.some(h => h.dateKey === dayKey && h.type === 'final');
+      const hasTrophy = achievements.some(a => a.dateKey === dayKey && a.type === 'trophy');
+      const hasData = dayMeals.length > 0 || dayActs.length > 0;
       const isToday = dayKey === today.toDateString();
 
       let bg = 'transparent';
@@ -1779,11 +1782,12 @@ body {
       else if (dayActs.length > 0) { bg = '#EEF4F0'; textColor = '#557A63'; }
       if (hasFinal) dot = '<div style="width:4px;height:4px;background:var(--peach-dark);border-radius:50%;margin:1px auto 0;"></div>';
       if (isToday) textColor = bg === 'transparent' ? 'var(--peach-dark)' : textColor;
+      const trophyHtml = hasTrophy ? '<div style="font-size:9px;line-height:1;margin-top:1px;">🏆</div>' : '';
 
       calCells += `
-        <div style="text-align:center;padding:4px 2px;">
+        <div onclick="${hasData ? `openDayDetail('${dayKey}')` : ''}" style="text-align:center;padding:4px 2px;${hasData ? 'cursor:pointer;' : ''}">
           <div style="width:28px;height:28px;border-radius:50%;background:${bg};color:${textColor};font-size:12px;font-weight:${isToday ? '700' : '400'};display:flex;align-items:center;justify-content:center;margin:0 auto;${isToday ? 'outline:2px solid var(--peach);outline-offset:1px;' : ''}">${day}</div>
-          ${dot}
+          ${dot}${trophyHtml}
         </div>`;
     }
 
@@ -1833,6 +1837,7 @@ body {
     // Get data per day
     const allMealsByDay = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
     const allActsByDay = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
+    const achievements = getAchievements();
 
     // Check if we have any data at all
     const hasData = weekDays.some(d => allMealsByDay[d] || allActsByDay[d] || history.find(h => h.dateKey === d));
@@ -1852,6 +1857,7 @@ body {
       const dayActs = allActsByDay[dayKey] || (d.toDateString() === today.toDateString() ? activities : []);
       const dayFeedbacks = history.filter(h => h.dateKey === dayKey);
       const hasFinal = dayFeedbacks.some(h => h.type === 'final');
+      const hasTrophy = achievements.some(a => a.dateKey === dayKey && a.type === 'trophy');
 
       if (dayMeals.length > 0) { totalMeals += dayMeals.length; activeDays++; }
       if (dayActs.length > 0) { totalActivities += dayActs.length; activityDays++; }
@@ -1861,7 +1867,7 @@ body {
       return `
         <div onclick="${isEmpty ? '' : `openDayDetail('${dayKey}')`}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);${isEmpty ? '' : 'cursor:pointer;'}">
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:600;color:var(--text);">${label}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${label}${hasTrophy ? ' <span style="font-size:14px;">🏆</span>' : ''}</div>
             <div style="font-size:12px;color:var(--text-soft);margin-top:2px;">
               ${isEmpty ? 'אין נתונים' : `${dayMeals.length} ארוחות · ${dayActs.length} פעילויות`}
             </div>
