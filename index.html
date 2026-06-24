@@ -1904,18 +1904,37 @@ body {
 
       const isEmpty = effectiveMeals.length === 0 && effectiveActs.length === 0 && dayFeedbacks.length === 0;
 
+      // Trend dot color from final summary feedback
+      let trend = null;
+      if (finalEntry?.feedback) {
+        const tm = finalEntry.feedback.match(/\[TREND:(חיובי|ניטרלי|שלילי)\]/);
+        if (tm) trend = tm[1];
+      }
+      let dotColor = null;
+      if (hasFinal) {
+        if (trend === 'חיובי') dotColor = '#4DB8D4';
+        else if (trend === 'שלילי') dotColor = '#D94040';
+        else dotColor = '#F5C800';
+      } else if (interimEntry) {
+        dotColor = '#F5C800';
+      }
+      const trendDot = dotColor
+        ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dotColor};flex-shrink:0;"></span>`
+        : '';
+
       return `
         <div onclick="${isEmpty ? '' : `openDayDetail('${dayKey}')`}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);${isEmpty ? '' : 'cursor:pointer;'}">
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:600;color:var(--text);">${label}${hasTrophy ? ' <span style="font-size:14px;">🏆</span>' : ''}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${label}</div>
             <div style="font-size:12px;color:var(--text-soft);margin-top:2px;">
               ${isEmpty ? 'אין נתונים' : `${effectiveMeals.length} ארוחות · ${effectiveActs.length} פעילויות`}
             </div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
             ${effectiveMeals.length > 0 ? '<span style="font-size:16px;">🍽️</span>' : '<span style="font-size:16px;opacity:0.2;">🍽️</span>'}
-            ${effectiveActs.length > 0 ? '<span style="font-size:16px;">🏃‍♀️</span>' : '<span style="font-size:16px;opacity:0.2;">🏃‍♀️</span>'}
-            ${hasFinal ? '<span style="font-size:16px;">✅</span>' : '<span style="font-size:16px;opacity:0.2;">✅</span>'}
+            ${effectiveActs.length > 0 ? '<span style="font-size:15px;">💪</span>' : '<span style="font-size:15px;opacity:0.2;">💪</span>'}
+            ${hasTrophy ? '<span style="font-size:15px;">🏆</span>' : ''}
+            ${trendDot}
             ${isEmpty ? '' : '<span style="font-size:14px;color:var(--text-soft);margin-right:2px;">›</span>'}
           </div>
         </div>`;
