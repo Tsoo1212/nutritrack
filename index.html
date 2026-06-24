@@ -3368,6 +3368,17 @@ body {
         handleSummaryResult(text, contentEl);
         saveFeedbackToHistory('final', lastSummaryText);
         if (lastTrend === 'up') setTimeout(() => awardDailyTrophy(), 300);
+        // Persist today's full data to history BEFORE clearing
+        try {
+          const allMeals = JSON.parse(localStorage.getItem('nutri_all_meals') || '{}');
+          allMeals[todayKey] = meals.map(m => ({ time: m.time, desc: m.desc }));
+          localStorage.setItem('nutri_all_meals', JSON.stringify(allMeals));
+        } catch(e) {}
+        try {
+          const allActs = JSON.parse(localStorage.getItem('nutri_all_activities') || '{}');
+          allActs[todayKey] = activities;
+          localStorage.setItem('nutri_all_activities', JSON.stringify(allActs));
+        } catch(e) {}
         // Save snapshot for possible restore, then clear current day
         const snapshot = {
           dateKey: todayKey,
@@ -3380,8 +3391,9 @@ body {
         activities = [];
         localStorage.removeItem('nutri_trend');
         lastTrend = null;
-        saveMealsToStorage();
-        saveActivitiesToStorage();
+        // Only update session-level keys — historical records already saved above
+        try { localStorage.setItem('nutri_meals', JSON.stringify([])); } catch(e) {}
+        try { localStorage.setItem('nutri_activities', JSON.stringify([])); } catch(e) {}
         renderMeals(false);
         renderActivities(false);
       }
