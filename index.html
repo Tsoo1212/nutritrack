@@ -1768,25 +1768,48 @@ body {
       const dayKey = d.toDateString();
       const dayMeals = allMealsByDay[dayKey] || (dayKey === today.toDateString() ? meals : []);
       const dayActs = allActsByDay[dayKey] || (dayKey === today.toDateString() ? activities : []);
-      const hasFinal = history.some(h => h.dateKey === dayKey && h.type === 'final');
+      const finalEntry  = history.find(h => h.dateKey === dayKey && h.type === 'final');
+      const interimEntry = history.find(h => h.dateKey === dayKey && h.type === 'interim');
+      const hasFinal = !!finalEntry;
       const hasTrophy = achievements.some(a => a.dateKey === dayKey && a.type === 'trophy');
-      const hasData = dayMeals.length > 0 || dayActs.length > 0 || hasFinal;
+      const hasData = dayMeals.length > 0 || dayActs.length > 0 || hasFinal || !!interimEntry;
       const isToday = dayKey === today.toDateString();
+
+      // Derive trend from saved feedback text
+      let trend = null;
+      if (finalEntry?.feedback) {
+        const tm = finalEntry.feedback.match(/\[TREND:(חיובי|ניטרלי|שלילי)\]/);
+        if (tm) trend = tm[1];
+      }
 
       let bg = 'transparent';
       let textColor = 'var(--text-soft)';
-
       if (dayMeals.length > 0 && dayActs.length > 0) { bg = 'var(--peach-dark)'; textColor = '#fff'; }
       else if (dayMeals.length > 0) { bg = 'var(--peach-light)'; textColor = 'var(--peach-dark)'; }
       else if (dayActs.length > 0) { bg = '#EEF4F0'; textColor = '#557A63'; }
-      else if (hasFinal) { bg = 'var(--peach-light)'; textColor = 'var(--peach-dark)'; }
+      else if (hasFinal || interimEntry) { bg = 'var(--peach-light)'; textColor = 'var(--peach-dark)'; }
       if (isToday) textColor = bg === 'transparent' ? 'var(--peach-dark)' : textColor;
-      const trophyHtml = hasTrophy ? '<div style="font-size:9px;line-height:1;margin-top:1px;">🏆</div>' : (hasFinal ? '<div style="font-size:9px;line-height:1;margin-top:1px;">✅</div>' : '');
+
+      // Colored status dot based on summary result (no ✅)
+      let dotColor = null;
+      if (hasFinal) {
+        if (trend === 'חיובי') dotColor = '#4DB8D4';      // תכלת
+        else if (trend === 'שלילי') dotColor = '#D94040';  // אדום
+        else dotColor = '#D4A800';                          // צהוב – ניטרלי / לא ידוע
+      } else if (interimEntry) {
+        dotColor = '#D4A800';                               // צהוב – סיכום ביניים בלבד
+      }
+
+      const statusDot = hasTrophy
+        ? '<div style="font-size:9px;line-height:1;margin-top:1px;">🏆</div>'
+        : dotColor
+          ? `<div style="width:6px;height:6px;border-radius:50%;background:${dotColor};margin:2px auto 0;"></div>`
+          : '';
 
       calCells += `
         <div onclick="${hasData ? `openDayDetail('${dayKey}')` : ''}" style="text-align:center;padding:4px 2px;${hasData ? 'cursor:pointer;' : ''}">
           <div style="width:28px;height:28px;border-radius:50%;background:${bg};color:${textColor};font-size:12px;font-weight:${isToday ? '700' : '400'};display:flex;align-items:center;justify-content:center;margin:0 auto;${isToday ? 'outline:2px solid var(--peach);outline-offset:1px;' : ''}">${day}</div>
-          ${trophyHtml}
+          ${statusDot}
         </div>`;
     }
 
@@ -1798,10 +1821,13 @@ body {
 
     // Legend
     const legendHtml = `
-      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--text-soft);margin-bottom:14px;">
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--peach-dark);margin-left:4px;"></span>תזונה + ספורט</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--peach-light);margin-left:4px;"></span>תזונה בלבד</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EEF4F0;margin-left:4px;"></span>ספורט בלבד</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text-soft);margin-bottom:14px;">
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--peach-dark);margin-left:4px;"></span>תזונה + ספורט</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--peach-light);margin-left:4px;"></span>תזונה בלבד</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#EEF4F0;margin-left:4px;"></span>ספורט בלבד</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4DB8D4;margin-left:4px;"></span>סיכום חיובי</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#D94040;margin-left:4px;"></span>סיכום שלילי</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#D4A800;margin-left:4px;"></span>ניטרלי / ביניים</span>
       </div>`;
 
     const nutriHtml = `
