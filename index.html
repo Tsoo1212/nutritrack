@@ -1919,21 +1919,22 @@ body {
         dotColor = '#F5C800';
       }
       const trendDot = dotColor
-        ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dotColor};flex-shrink:0;"></span>`
+        ? `<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${dotColor};flex-shrink:0;"></span>`
+        : '<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--border);opacity:0.4;flex-shrink:0;"></span>';
+
+      // Activity subtitle: show first activity type instead of generic count
+      const actSummary = effectiveActs.length > 0
+        ? ' · ' + effectiveActs[0].type + (effectiveActs.length > 1 ? ` +${effectiveActs.length - 1}` : '')
         : '';
+      const subtitle = isEmpty ? 'אין נתונים' : `${effectiveMeals.length} ארוחות${actSummary}`;
 
       return `
         <div onclick="${isEmpty ? '' : `openDayDetail('${dayKey}')`}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);${isEmpty ? '' : 'cursor:pointer;'}">
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:600;color:var(--text);">${label}</div>
-            <div style="font-size:12px;color:var(--text-soft);margin-top:2px;">
-              ${isEmpty ? 'אין נתונים' : `${effectiveMeals.length} ארוחות · ${effectiveActs.length} פעילויות`}
-            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${label}${hasTrophy ? ' 🏆' : ''}</div>
+            <div style="font-size:12px;color:var(--text-soft);margin-top:2px;">${subtitle}</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
-            ${effectiveMeals.length > 0 ? '<span style="font-size:16px;">🍽️</span>' : '<span style="font-size:16px;opacity:0.2;">🍽️</span>'}
-            ${effectiveActs.length > 0 ? '<span style="font-size:15px;">💪</span>' : ''}
-            ${hasTrophy ? '<span style="font-size:15px;">🏆</span>' : ''}
             ${trendDot}
             ${isEmpty ? '' : '<span style="font-size:14px;color:var(--text-soft);margin-right:2px;">›</span>'}
           </div>
