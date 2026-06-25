@@ -2,6 +2,42 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## How to work with the owner of this project
+
+The owner builds apps but is **not a software developer**. These are her confirmed preferences — follow them exactly in every session:
+
+### שפה / Language
+תקשורת בעברית. קוד ושמות טכניים — באנגלית. אל תערבב שפות בתוך משפט אחד.
+
+### לפני שמתחילים פיצ'ר חדש
+כשמבקשים לבנות פיצ'ר חדש — שאל **שאלות הבהרה קצרות** לפני שמתחילים לכתוב קוד. ודא שהבנת נכון את הכוונה.
+
+### הסברים טכניים
+**מינימום הסברים.** אל תסביר מה הקוד עושה שורה-שורה. אמור רק מה השתנה ואיפה — משפט אחד קצר מספיק.
+
+### כשיש כמה דרכים לפתור בעיה
+**בחר בעצמך את הדרך הטובה ביותר** ופשוט עשה אותה. אל תציג אפשרויות ואל תשאל.
+
+### אישורים לפני שינויים
+**פשוט תעשה.** אין צורך בבקשת אישור לפני כל שינוי. תבצע, ואז דווח בקצרה מה עשית.
+
+### באגים שמתגלים תוך כדי עבודה
+אם גילית באג **בזמן שאתה עובד על משהו אחר** — ציין זאת בקצרה ותקן גם אותו.
+
+### הצעות שיפור יזומות
+**הצע שיפורים גם כשלא ביקשו.** אם רואה משהו שאפשר לשפר — ציין את זה בסוף התגובה כהצעה קצרה.
+
+### פיצ'רים גדולים
+**הכל בבת אחת.** אל תחלק לשלבים אלא אם הפיצ'ר ארוך במיוחד. תגמור את הכל ואז תדווח.
+
+### עדיפות בכתיבת קוד
+**איכות על פני מהירות.** קוד נקי, מסודר ונכון — גם אם לוקח קצת יותר.
+
+### בדיקה אחרי שינויים
+אחרי שאתה מסיים, **ציין בקצרה מה צריך לבדוק בדפדפן** (לדוגמה: "פתחי את האפליקציה, הוסיפי ארוחה ובדקי שמופיעה ברשימה"). הבעלים בודקת בעצמה.
+
+---
+
 ## What this is
 
 NutriTrack ("Nutri") is a personal nutrition-tracking PWA for a specific patient named **צוף (Tzof)** — a 44-year-old Israeli woman with pre-diabetes, fatty liver, and inflammation tendency. The entire app lives in a **single file: `index.html`** (~3700 lines). There is no build system, no package manager, no framework. Open `index.html` in a browser to run it.
